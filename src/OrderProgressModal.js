@@ -1,33 +1,33 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+// Images for steps
+const defaultImage = "https://cdn-icons-png.flaticon.com/512/992/992700.png"; // fallback
+// New icons
+const timerIcon =
+  "https://media.lordicon.com/icons/wired/lineal/46-timer-stopwatch.svg";
+const paymentConfirmedImage =
+  "https://www.kablooe.com/wp-content/uploads/2019/08/check_mark.png";
+const readyImage =
+  "https://img.freepik.com/free-psd/3d-rendering-hotel-icon_23-2150102372.jpg?semt=ais_hybrid&w=740&q=80";
+const foodReadyImage =
+  "https://static.vecteezy.com/system/resources/previews/012/751/486/non_2x/food-preparation-icon-style-vector.jpg";
+const STEPS = [
+  { title: "Order Placed", img: timerIcon },
+  { title: "Payment Confirmed", img: paymentConfirmedImage },
+  { title: "In Preparation", img: null },
+  { title: "Ready to Serve", img: readyImage },
+];
+const stepDurations = [30000, 20000, 120000, 0];
 
 export default function OrderProgressModal({ isOpen, onClose }) {
   const [step, setStep] = useState(0);
   const [paused, setPaused] = useState(false);
   const [theme, setTheme] = useState("light");
-  const timerRef = useRef(null);
 
   // Timer settings per step (in milliseconds)
-  const stepDurations = [30000, 20000, 120000, 0];
 
   // Countdown timer state
   const [countdown, setCountdown] = useState(stepDurations[0]);
-
-  // Images for steps
-  const defaultImage = "https://cdn-icons-png.flaticon.com/512/992/992700.png"; // fallback
-
-  // New icons
-  const timerIcon = "https://media.lordicon.com/icons/wired/lineal/46-timer-stopwatch.svg";
-  const paymentConfirmedImage = "https://www.kablooe.com/wp-content/uploads/2019/08/check_mark.png";
-  const readyImage = "https://img.freepik.com/free-psd/3d-rendering-hotel-icon_23-2150102372.jpg?semt=ais_hybrid&w=740&q=80";
-  const foodReadyImage = "https://static.vecteezy.com/system/resources/previews/012/751/486/non_2x/food-preparation-icon-style-vector.jpg";
-
-  const STEPS = [
-    { title: "Order Placed", img: timerIcon },
-    { title: "Payment Confirmed", img: paymentConfirmedImage },
-    { title: "In Preparation", img: null },
-    { title: "Ready to Serve", img: readyImage },
-  ];
 
   useEffect(() => {
     const storedTheme = localStorage.getItem("theme") || "light";
@@ -66,7 +66,8 @@ export default function OrderProgressModal({ isOpen, onClose }) {
     return () => clearInterval(interval);
   }, [countdown, paused, step, isOpen]);
 
-  const bgColor = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
+  const bgColor =
+    theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
 
   // Spinner with pulse animation for active steps
   const Spinner = () => (
@@ -118,7 +119,8 @@ export default function OrderProgressModal({ isOpen, onClose }) {
             <div className="flex items-center mb-8">
               {STEPS.map((s, idx) => {
                 const isActive = idx === step;
-                const isCompleted = idx < step || (s.title === "Ready to Serve" && step >= 3);
+                const isCompleted =
+                  idx < step || (s.title === "Ready to Serve" && step >= 3);
 
                 return (
                   <React.Fragment key={s.title}>
@@ -129,22 +131,26 @@ export default function OrderProgressModal({ isOpen, onClose }) {
                         layout
                         initial={false}
                         animate={{
-                          background:
-                            isCompleted
-                              ? "linear-gradient(135deg, #4ade80, #22c55e)"
-                              : isActive
-                              ? "linear-gradient(135deg, #fbbf24, #f59e0b)"
-                              : "#e5e7eb",
+                          background: isCompleted
+                            ? "linear-gradient(135deg, #4ade80, #22c55e)"
+                            : isActive
+                            ? "linear-gradient(135deg, #fbbf24, #f59e0b)"
+                            : "#e5e7eb",
                           scale: isActive ? 1.2 : 1,
                           boxShadow: isActive
                             ? "0 0 15px rgba(251,191,36,0.7)"
                             : "none",
                         }}
-                        transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 300,
+                          damping: 20,
+                        }}
                         className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-gray-300"
                       >
                         {isActive ? (
-                          s.title === "Order Placed" || s.title === "Payment Confirmed" ? (
+                          s.title === "Order Placed" ||
+                          s.title === "Payment Confirmed" ? (
                             <Spinner />
                           ) : s.title === "In Preparation" && !paused ? (
                             <motion.div
@@ -164,7 +170,11 @@ export default function OrderProgressModal({ isOpen, onClose }) {
                             </motion.div>
                           ) : s.img ? (
                             <img
-                              src={paused && s.title === "In Preparation" ? foodReadyImage : s.img}
+                              src={
+                                paused && s.title === "In Preparation"
+                                  ? foodReadyImage
+                                  : s.img
+                              }
                               alt={s.title}
                               className="w-10 h-10 rounded-full object-cover border border-white"
                             />
@@ -178,7 +188,9 @@ export default function OrderProgressModal({ isOpen, onClose }) {
                         ) : isCompleted ? (
                           <img
                             src={
-                              s.title === "In Preparation" ? foodReadyImage : s.img || defaultImage
+                              s.title === "In Preparation"
+                                ? foodReadyImage
+                                : s.img || defaultImage
                             }
                             alt={s.title}
                             className="w-10 h-10 rounded-full object-cover border border-white"
@@ -192,26 +204,29 @@ export default function OrderProgressModal({ isOpen, onClose }) {
                         )}
                       </motion.div>
                       <span
-  className={`mt-2 text-sm font-semibold select-none text-center w-full ${
-    isCompleted ? "text-green-600" : isActive ? "text-amber-500" : "text-gray-400"
-  }`}
->
-  {s.title}
-</span>
+                        className={`mt-2 text-sm font-semibold select-none text-center w-full ${
+                          isCompleted
+                            ? "text-green-600"
+                            : isActive
+                            ? "text-amber-500"
+                            : "text-gray-400"
+                        }`}
+                      >
+                        {s.title}
+                      </span>
                     </div>
 
                     {/* Connector line except after last step */}
                     {idx !== STEPS.length - 1 && (
-  <motion.div
-    layout
-    initial={false}
-    animate={{
-      background: idx < step ? "#ffffff" : "#f3f4f6",  // white vs light gray
-    }}
-    className="flex-1 h-1 rounded-full mx-3 mt-6"
-  />
-)}
-
+                      <motion.div
+                        layout
+                        initial={false}
+                        animate={{
+                          background: idx < step ? "#ffffff" : "#f3f4f6", // white vs light gray
+                        }}
+                        className="flex-1 h-1 rounded-full mx-3 mt-6"
+                      />
+                    )}
                   </React.Fragment>
                 );
               })}
