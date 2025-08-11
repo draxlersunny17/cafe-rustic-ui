@@ -196,7 +196,7 @@ export default function CafeRustic() {
   const [selectedItem, setSelectedItem] = useState(null);
   const [cartOpen, setCartOpen] = useState(false); // controls bottom panel expanded/collapsed
   const [orderModalOpen, setOrderModalOpen] = useState(false);
-
+  const [menuOpen, setMenuOpen] = useState(false);
   // Cart state persisted in localStorage
   const [cart, setCart] = useState(() => {
     try {
@@ -323,49 +323,141 @@ function handleCheckout() {
     >
       {/* NAV */}
       <nav
-        className={`${
-          theme === "dark" ? "bg-gray-800" : "bg-white"
-        } fixed w-full z-30 bg-opacity-60 backdrop-blur-md`}
-      >
-        <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xl"
-             
-            >
-              <img
-               src="/images/cafelogo.png"
+      className={`${
+        theme === "dark" ? "bg-gray-800" : "bg-white"
+      } fixed w-full z-30 bg-opacity-60 backdrop-blur-md`}
+    >
+      <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xl">
+            <img
+              src="/images/cafelogo.png"
               alt="Logo"
               className="w-8 h-8 object-cover"
-              />
-            </div>
-            <div className="text-lg font-semibold">Café Rustic</div>
+            />
           </div>
-
-          <div className="hidden md:flex items-center gap-6">
-            <a href="#home" className="hover:underline">
-              Home
-            </a>
-            <a href="#about" className="hover:underline">
-              About
-            </a>
-            <a href="#menu" className="hover:underline">
-              Menu
-            </a>
-            <a href="#contact" className="hover:underline">
-              Contact
-            </a>
-            <button
-              onClick={toggleTheme}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg  hover:bg-gray-200 dark:hover:bg-gray-700"
-            >
-              {theme === "light" ? <FaMoon /> : <FaSun />}
-            </button>
-          </div>
-
-          <div className="md:hidden">☰</div>
+          <div className="text-lg font-semibold">Café Rustic</div>
         </div>
-      </nav>
+
+        {/* Desktop Menu */}
+        <div className="hidden md:flex items-center gap-6">
+          <a href="#home" className="hover:underline">
+            Home
+          </a>
+          <a href="#about" className="hover:underline">
+            About
+          </a>
+          <a href="#menu" className="hover:underline">
+            Menu
+          </a>
+          <a href="#contact" className="hover:underline">
+            Contact
+          </a>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700"
+          >
+            {theme === "light" ? <FaMoon /> : <FaSun />}
+          </button>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <div
+          className="md:hidden cursor-pointer text-2xl"
+          onClick={() => setMenuOpen(!menuOpen)}
+        >
+          ☰
+        </div>
+      </div>
+
+      {/* Mobile Menu Dropdown */}
+      {menuOpen && (
+  <div
+    className={`md:hidden border-t ${
+      theme === "light"
+        ? "bg-white border-gray-200"
+        : "bg-gray-900 border-gray-700"
+    }`}
+  >
+    <ul
+      className={`flex flex-col divide-y ${
+        theme === "light" ? "divide-gray-200" : "divide-gray-700"
+      }`}
+    >
+      <li>
+        <a
+          href="#home"
+          className={`block px-6 py-3 ${
+            theme === "light"
+              ? "hover:bg-gray-100"
+              : "hover:bg-gray-800"
+          }`}
+          onClick={() => setMenuOpen(false)}
+        >
+          Home
+        </a>
+      </li>
+      <li>
+        <a
+          href="#about"
+          className={`block px-6 py-3 ${
+            theme === "light"
+              ? "hover:bg-gray-100"
+              : "hover:bg-gray-800"
+          }`}
+          onClick={() => setMenuOpen(false)}
+        >
+          About
+        </a>
+      </li>
+      <li>
+        <a
+          href="#menu"
+          className={`block px-6 py-3 ${
+            theme === "light"
+              ? "hover:bg-gray-100"
+              : "hover:bg-gray-800"
+          }`}
+          onClick={() => setMenuOpen(false)}
+        >
+          Menu
+        </a>
+      </li>
+      <li>
+        <a
+          href="#contact"
+          className={`block px-6 py-3 ${
+            theme === "light"
+              ? "hover:bg-gray-100"
+              : "hover:bg-gray-800"
+          }`}
+          onClick={() => setMenuOpen(false)}
+        >
+          Contact
+        </a>
+      </li>
+      <li>
+        <button
+          onClick={() => {
+            toggleTheme();
+            setMenuOpen(false);
+          }}
+          className={`flex items-center gap-2 w-full px-6 py-3 text-left ${
+            theme === "light"
+              ? "hover:bg-gray-100"
+              : "hover:bg-gray-800"
+          }`}
+        >
+          {theme === "light" ? <FaMoon /> : <FaSun />}
+          Toggle Theme
+        </button>
+      </li>
+    </ul>
+  </div>
+)}
+
+    </nav>
 
       {/* HERO */}
       <header id="home" className="relative h-96 md:h-screen overflow-hidden">
