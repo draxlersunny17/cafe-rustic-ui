@@ -371,7 +371,7 @@ function handleCheckout() {
       <header id="home" className="relative h-96 md:h-screen overflow-hidden">
         <img
           alt="Cafe interior"
-          src="https://sdmntprwestus2.oaiusercontent.com/files/00000000-c934-61f8-86b4-7eb4528cfd46/raw?se=2025-08-10T19%3A44%3A13Z&sp=r&sv=2024-08-04&sr=b&scid=9516aaa0-46b9-5a16-ba84-cd3b68e731e1&skoid=789f404f-91a9-4b2f-932c-c44965c11d82&sktid=a48cca56-e6da-484e-a814-9c849652bcb3&skt=2025-08-10T16%3A01%3A00Z&ske=2025-08-11T16%3A01%3A00Z&sks=b&skv=2024-08-04&sig=7v2l1ZlXtOZjJzDh%2BsaS%2BmwPkHirDR9G1aJk7q0D%2BYg%3D"
+          src="/images/cafebackground.png"
           className="absolute inset-0 w-full h-full object-cover brightness-75"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/60" />
