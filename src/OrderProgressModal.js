@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { launchConfetti } from "./utils/confetti";
+
 // Images for steps
 const defaultImage = "https://cdn-icons-png.flaticon.com/512/992/992700.png"; // fallback
-// New icons
 const timerIcon =
   "https://media.lordicon.com/icons/wired/lineal/46-timer-stopwatch.svg";
 const paymentConfirmedImage =
@@ -11,65 +12,73 @@ const readyImage =
   "https://img.freepik.com/free-psd/3d-rendering-hotel-icon_23-2150102372.jpg?semt=ais_hybrid&w=740&q=80";
 const foodReadyImage =
   "https://static.vecteezy.com/system/resources/previews/012/751/486/non_2x/food-preparation-icon-style-vector.jpg";
+
 const STEPS = [
   { title: "Order Placed", img: timerIcon },
   { title: "Payment Confirmed", img: paymentConfirmedImage },
   { title: "In Preparation", img: null },
   { title: "Ready to Serve", img: readyImage },
 ];
-const stepDurations = [30000, 20000, 120000, 0];
 
-export default function OrderProgressModal({ isOpen, onClose }) {
+// Step durations in ms
+const stepDurations = [30000, 20000, 120000]; // Step 1: 30s, Step 2: 20s, Step 3: 2m
+const totalTime = stepDurations.reduce((a, b) => a + b, 0); // total process time
+
+export default function OrderProgressModal({ isOpen, onClose, theme }) {
   const [step, setStep] = useState(0);
   const [paused, setPaused] = useState(false);
-  const [theme, setTheme] = useState("light");
+  const [totalCountdown, setTotalCountdown] = useState(totalTime);
 
-  // Timer settings per step (in milliseconds)
 
-  // Countdown timer state
-  const [countdown, setCountdown] = useState(stepDurations[0]);
 
-  useEffect(() => {
-    const storedTheme = localStorage.getItem("theme") || "light";
-    setTheme(storedTheme);
-  }, []);
-
-  // Reset timer on modal open or step change
+  // Reset on modal open
   useEffect(() => {
     if (!isOpen) return;
-
     setStep(0);
     setPaused(false);
-    setCountdown(stepDurations[0]);
+    setTotalCountdown(totalTime);
   }, [isOpen]);
 
-  // Countdown & step increment timer
+  // Countdown logic
   useEffect(() => {
-    if (!isOpen) return;
-
-    if (paused) return; // pause countdown when paused
-
-    if (countdown <= 0) {
-      // Move to next step
-      if (step < STEPS.length - 1) {
-        const nextStep = step + 1;
-        setStep(nextStep);
-        setCountdown(stepDurations[nextStep]);
-      }
-      return;
-    }
+    if (!isOpen || paused) return;
+    if (totalCountdown <= 0) return;
 
     const interval = setInterval(() => {
-      setCountdown((time) => time - 1000);
+      setTotalCountdown((prev) => prev - 1000);
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [countdown, paused, step, isOpen]);
+  }, [totalCountdown, paused, isOpen]);
+
+  // Step change logic based on elapsed time
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const elapsed = totalTime - totalCountdown;
+    let cumulative = 0;
+
+    for (let i = 0; i < stepDurations.length; i++) {
+      cumulative += stepDurations[i];
+      if (elapsed < cumulative) {
+        setStep(i);
+        return;
+      }
+    }
+    // Final step
+    setStep(STEPS.length - 1);
+  }, [totalCountdown, isOpen]);
+
+  // Confetti on final step
+  useEffect(() => {
+    if (step === STEPS.length - 1 && isOpen) {
+      launchConfetti();
+    }
+  }, [step, isOpen]);
 
   const bgColor =
     theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
 
-  // Spinner with pulse animation for active steps
   const Spinner = () => (
     <motion.div
       className="border-4 border-t-4 border-gray-300 border-t-amber-400 rounded-full w-16 h-16"
@@ -78,7 +87,6 @@ export default function OrderProgressModal({ isOpen, onClose }) {
     />
   );
 
-  // Format timer mm:ss
   const formatTime = (ms) => {
     const totalSeconds = Math.max(0, Math.floor(ms / 1000));
     const minutes = Math.floor(totalSeconds / 60)
@@ -107,13 +115,24 @@ export default function OrderProgressModal({ isOpen, onClose }) {
           >
             <h2 className="text-3xl font-semibold mb-6 tracking-wide text-center select-none">
               Order Status
-              {/* Show timer only if NOT on last step */}
               {step < STEPS.length - 1 && (
                 <span className="ml-4 text-lg font-mono text-amber-500">
-                  {formatTime(countdown)}
+                  {formatTime(totalCountdown)}
                 </span>
               )}
             </h2>
+
+             {/* Cancel Order button */}
+            {/* {step < 2 && (
+              <div className="mb-4 text-center">
+                <button
+                  onClick={handleCancel}
+                  className="px-6 py-2 rounded-full font-semibold bg-red-500 hover:bg-red-600 text-white shadow-md transition-colors duration-300"
+                >
+                  Cancel Order
+                </button>
+              </div>
+            )} */}
 
             {/* Progress Bar */}
             <div className="flex items-center mb-8">
@@ -124,9 +143,7 @@ export default function OrderProgressModal({ isOpen, onClose }) {
 
                 return (
                   <React.Fragment key={s.title}>
-                    <div
-                      className={`flex flex-col items-center relative z-10 cursor-default select-none`}
-                    >
+                    <div className="flex flex-col items-center relative z-10 cursor-default select-none">
                       <motion.div
                         layout
                         initial={false}
@@ -216,13 +233,12 @@ export default function OrderProgressModal({ isOpen, onClose }) {
                       </span>
                     </div>
 
-                    {/* Connector line except after last step */}
                     {idx !== STEPS.length - 1 && (
                       <motion.div
                         layout
                         initial={false}
                         animate={{
-                          background: idx < step ? "#ffffff" : "#f3f4f6", // white vs light gray
+                          background: idx < step ? "#ffffff" : "#f3f4f6",
                         }}
                         className="flex-1 h-1 rounded-full mx-3 mt-6"
                       />
@@ -232,7 +248,7 @@ export default function OrderProgressModal({ isOpen, onClose }) {
               })}
             </div>
 
-            {/* Pause/Resume button only on In Preparation */}
+            {/* Pause/Resume for In Preparation */}
             {step === 2 && (
               <div className="text-center mb-4">
                 <button
@@ -248,7 +264,7 @@ export default function OrderProgressModal({ isOpen, onClose }) {
               </div>
             )}
 
-            {/* Close button on last step */}
+            {/* Close on last step */}
             {step >= STEPS.length - 1 && (
               <button
                 onClick={onClose}
