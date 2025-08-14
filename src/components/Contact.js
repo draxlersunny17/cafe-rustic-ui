@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toast } from 'react-toastify';
 
 export default function Contact({ theme }) {
   const [form, setForm] = useState({
@@ -33,9 +34,8 @@ export default function Contact({ theme }) {
 
   const submit = (e) => {
     e.preventDefault();
-    alert(
-      `Thanks ${form.name}! Your table for ${form.guests} is requested on ${form.date} at ${form.time}.`
-    );
+    toast.success(`Thanks ${form.name}! Your table for ${form.guests} is requested on ${form.date} at ${form.time}.`);
+
     setForm({ name: "", phone: "", date: "", time: "", guests: 2, notes: "" });
   };
 

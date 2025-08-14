@@ -14,6 +14,9 @@ import Footer from "./components/Footer";
 import SpecialOffersCarousel from "./components/SpecialOffersCarousel";
 import { FaSun, FaMoon } from "react-icons/fa";
 import jsPDF from "jspdf";
+import { toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 // If you already have MENU elsewhere, import it and delete this block.
 const MENU = [
@@ -336,19 +339,49 @@ export default function CafeRustic() {
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderNumber, setOrderNumber] = useState(null);
 
+  const [loyaltyPoints, setLoyaltyPoints] = useState(
+    () => parseInt(localStorage.getItem("loyaltyPoints")) || 0
+  );
+  const [redeemPoints, setRedeemPoints] = useState(0);
+
+  useEffect(() => {
+    localStorage.setItem("loyaltyPoints", loyaltyPoints);
+  }, [loyaltyPoints]);
+
   const handleCheckout = () => {
     if (cart.length === 0) return;
+
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
     setOrderNumber(newOrderNumber);
 
+    // Calculate earned points BEFORE discount
+    const earnedPoints = Math.floor(totalPrice / 10);
+
+    // Calculate discount using redeemed points
+    const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice);
+
+    // Update loyalty points: remove redeemed, add earned
+    setLoyaltyPoints((prev) => prev - discount + earnedPoints);
+
+    // Reset redeem input
+    setRedeemPoints(0);
+
+    // Let the user know how many points they earned
+    toast.success(`You earned ${earnedPoints} points!`);
+
+    // Save order history with discount applied
     const newOrder = {
       orderNumber: newOrderNumber,
       date: new Date().toLocaleString(),
       items: cart,
-      total: totalPrice,
+      subtotal: totalPrice,
+      discount,
+      total: totalPrice - discount,
+      earnedPoints,
     };
     setOrderHistory((prev) => [newOrder, ...prev]);
 
+    // Clear cart and show progress modal
     clearCart();
     setOrderModalOpen(true);
     setCartOpen(false);
@@ -447,146 +480,152 @@ export default function CafeRustic() {
   };
 
   return (
-    <div
-      className={
-        theme === "dark"
-          ? "dark bg-gray-950 text-white"
-          : "bg-white text-gray-900"
-      }
-    >
-      <Navbar
-        theme={theme}
-        toggleTheme={toggleTheme}
-        setMenuOpen={setMenuOpen}
-        menuOpen={menuOpen}
-      />
+    <>
+      <ToastContainer position="top-center" autoClose={3000} theme={theme} />
+      <div
+        className={
+          theme === "dark"
+            ? "dark bg-gray-950 text-white"
+            : "bg-white text-gray-900"
+        }
+      >
+        <Navbar
+          theme={theme}
+          toggleTheme={toggleTheme}
+          setMenuOpen={setMenuOpen}
+          menuOpen={menuOpen}
+        />
 
-      {/* MOBILE MENU (simple anchor links) */}
-      {menuOpen && (
-        <div
-          className={`md:hidden sticky top-16 z-20 border-b border-gray-200 dark:border-gray-800 
+        {/* MOBILE MENU (simple anchor links) */}
+        {menuOpen && (
+          <div
+            className={`md:hidden sticky top-16 z-20 border-b border-gray-200 dark:border-gray-800 
       ${
         theme === "light" ? "bg-white text-gray-900" : "bg-gray-900 text-white"
       }`}
-        >
-          <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
-            {/* Links in a row */}
-            <div className="flex items-center gap-6">
-              {["Home", "About", "Menu", "Contact"].map((item) => (
-                <a
-                  key={item}
-                  href={`#${item.toLowerCase()}`}
-                  className="py-1 hover:underline"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item}
-                </a>
-              ))}
+          >
+            <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between gap-4">
+              {/* Links in a row */}
+              <div className="flex items-center gap-6">
+                {["Home", "About", "Menu", "Contact"].map((item) => (
+                  <a
+                    key={item}
+                    href={`#${item.toLowerCase()}`}
+                    className="py-1 hover:underline"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item}
+                  </a>
+                ))}
+              </div>
+
+              {/* Theme toggle button inside mobile menu */}
+              <button
+                onClick={() => {
+                  toggleTheme();
+                  setMenuOpen(false);
+                }}
+                className={`flex items-center gap-2 px-3 py-1 rounded ${
+                  theme === "light" ? "hover:bg-gray-100" : "hover:bg-gray-800"
+                }`}
+              >
+                {theme === "light" ? <FaMoon /> : <FaSun />}
+                <span className="hidden sm:inline">Toggle Theme</span>
+              </button>
             </div>
-
-            {/* Theme toggle button inside mobile menu */}
-            <button
-              onClick={() => {
-                toggleTheme();
-                setMenuOpen(false);
-              }}
-              className={`flex items-center gap-2 px-3 py-1 rounded ${
-                theme === "light" ? "hover:bg-gray-100" : "hover:bg-gray-800"
-              }`}
-            >
-              {theme === "light" ? <FaMoon /> : <FaSun />}
-              <span className="hidden sm:inline">Toggle Theme</span>
-            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      <Hero />
-      <About />
+        <Hero />
+        <About />
 
-      <SpecialOffersCarousel theme={theme} />
+        <SpecialOffersCarousel theme={theme} />
 
-      <MenuSection
-        id="menu"
-        categories={CATEGORIES}
-        theme={theme}
-        category={category}
-        setCategory={setCategory}
-        query={query}
-        setQuery={setQuery}
-        items={filteredMenu}
-        favorites={favorites}
-        toggleFavorite={toggleFavorite}
-        addToCart={addToCart}
-        setSelectedItem={setSelectedItem}
-        handleDownloadPDF={handleDownloadPDF}
-      />
+        <MenuSection
+          id="menu"
+          categories={CATEGORIES}
+          theme={theme}
+          category={category}
+          setCategory={setCategory}
+          query={query}
+          setQuery={setQuery}
+          items={filteredMenu}
+          favorites={favorites}
+          toggleFavorite={toggleFavorite}
+          addToCart={addToCart}
+          setSelectedItem={setSelectedItem}
+          handleDownloadPDF={handleDownloadPDF}
+        />
 
-      <Reviews theme={theme} />
-      <OrderHistory
-        orderHistory={orderHistory}
-        formatINR={formatINR}
-        theme={theme}
-        onReorder={(order) => {
-          order.items.forEach((it) => {
-            // Rebuild the item from the MENU array so all fields exist
-            const menuItem = MENU.find((m) => m.id === it.id);
-            if (menuItem) {
-              addToCart(menuItem, it.qty);
-            }
-          });
-          alert(`Order #${order.orderNumber} added to cart!`);
-        }}
-      />
+        <Reviews theme={theme} />
+        <OrderHistory
+          orderHistory={orderHistory}
+          formatINR={formatINR}
+          theme={theme}
+          onReorder={(order) => {
+            order.items.forEach((it) => {
+              // Rebuild the item from the MENU array so all fields exist
+              const menuItem = MENU.find((m) => m.id === it.id);
+              if (menuItem) {
+                addToCart(menuItem, it.qty);
+              }
+            });
+            toast.success(`Order #${order.orderNumber} added to cart!`);
+          }}
+        />
 
-      <Contact theme={theme} />
+        <Contact theme={theme} />
 
-      <Footer />
+        <Footer />
 
-      <DetailsModal
-        item={selectedItem}
-        onClose={() => setSelectedItem(null)}
-        addToCart={addToCart}
-        theme={theme}
-        formatINR={formatINR}
-      />
+        <DetailsModal
+          item={selectedItem}
+          onClose={() => setSelectedItem(null)}
+          addToCart={addToCart}
+          theme={theme}
+          formatINR={formatINR}
+        />
 
-      {/* Hidden trigger for FloatingButtons -> Cart open */}
-      <button
-        id="cart-panel-btn"
-        onClick={() => setCartOpen(true)}
-        className="hidden"
-        aria-hidden
-      />
+        {/* Hidden trigger for FloatingButtons -> Cart open */}
+        <button
+          id="cart-panel-btn"
+          onClick={() => setCartOpen(true)}
+          className="hidden"
+          aria-hidden
+        />
 
-      <FloatingButtons
-        cartCount={cartCount}
-        favorites={favorites}
-        favPulse={favPulse}
-        setCategory={setCategory}
-      />
+        <FloatingButtons
+          cartCount={cartCount}
+          favorites={favorites}
+          favPulse={favPulse}
+          setCategory={setCategory}
+        />
 
-      <CartPanel
-        open={cartOpen}
-        onClose={() => setCartOpen(false)}
-        cart={cart}
-        incQty={incQty}
-        decQty={decQty}
-        removeItem={removeItem}
-        clearCart={clearCart}
-        totalPrice={totalPrice}
-        totalCalories={totalCalories}
-        formatINR={formatINR}
-        onCheckout={handleCheckout}
-        theme={theme}
-      />
+        <CartPanel
+          open={cartOpen}
+          onClose={() => setCartOpen(false)}
+          cart={cart}
+          incQty={incQty}
+          decQty={decQty}
+          removeItem={removeItem}
+          clearCart={clearCart}
+          totalPrice={totalPrice}
+          totalCalories={totalCalories}
+          formatINR={formatINR}
+          onCheckout={handleCheckout}
+          theme={theme}
+          loyaltyPoints={loyaltyPoints}
+          redeemPoints={redeemPoints}
+          setRedeemPoints={setRedeemPoints}
+        />
 
-      <OrderProgressModal
-        isOpen={orderModalOpen}
-        onClose={() => setOrderModalOpen(false)}
-        orderNumber={orderNumber}
-        theme={theme}
-      />
-    </div>
+        <OrderProgressModal
+          isOpen={orderModalOpen}
+          onClose={() => setOrderModalOpen(false)}
+          orderNumber={orderNumber}
+          theme={theme}
+        />
+      </div>
+    </>
   );
 }

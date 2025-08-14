@@ -1,4 +1,5 @@
 import React from "react";
+import { toast } from 'react-toastify';
 
 export default function CartPanel({
   open,
@@ -13,16 +14,26 @@ export default function CartPanel({
   formatINR,
   onCheckout,
   theme,
+  loyaltyPoints,       // ✅ new prop
+  redeemPoints,        // ✅ new prop
+  setRedeemPoints,     // ✅ new prop
 }) {
+  const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice); // prevent over-discount
+
+  const handleCheckout = () => {
+    if (discount > 0) {
+      toast.success(`Yaay! You have saved ${formatINR(discount)} 🎉`);
+    }
+    onCheckout();
+  };
+
   return (
     <div
       className={`fixed top-0 right-0 h-full z-50 shadow-xl border-l transition-transform duration-300 ease-in-out ${
         theme === "dark"
           ? "bg-gray-900 border-gray-700 text-white"
           : "bg-white border-gray-200 text-gray-800"
-      } ${
-        open ? "translate-x-0 w-80" : "translate-x-full w-0 overflow-hidden"
-      }`}
+      } ${open ? "translate-x-0 w-80" : "translate-x-full w-0 overflow-hidden"}`}
     >
       {open && (
         <div className="flex flex-col h-full">
@@ -135,26 +146,52 @@ export default function CartPanel({
                 theme === "dark" ? "border-gray-700" : "border-gray-200"
               }`}
             >
-              <div className="flex justify-between mb-3">
-                <span
-                  className={`text-sm ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  Total Calories
-                </span>
+              {/* Loyalty Points Section */}
+              <div className="mb-3">
+                <div className="flex justify-between mb-2">
+                  <span className="text-sm">Available Points</span>
+                  <span className="font-bold">{loyaltyPoints} pts</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    max={loyaltyPoints}
+                    value={redeemPoints}
+                    onChange={(e) => setRedeemPoints(Number(e.target.value))}
+                    className={`w-20 px-2 py-1 border rounded ${
+                      theme === "dark"
+                        ? "bg-gray-800 border-gray-700 text-white"
+                        : "bg-white border-gray-300 text-gray-800"
+                    }`}
+                  />
+                  <span className="text-sm text-gray-500">
+                    = {formatINR(discount)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-between mb-2">
+                <span className="text-sm text-gray-500">Total Calories</span>
                 <span className="font-bold">{totalCalories} kcal</span>
               </div>
+
+              <div className="flex justify-between mb-1">
+                <span className="text-sm text-gray-500">Subtotal</span>
+                <span className="font-bold">{formatINR(totalPrice)}</span>
+              </div>
+
+              {discount > 0 && (
+                <div className="flex justify-between text-green-600 mb-1">
+                  <span className="text-sm">Points Discount</span>
+                  <span>-{formatINR(discount)}</span>
+                </div>
+              )}
+
               <div className="flex justify-between mb-4">
-                <span
-                  className={`text-sm ${
-                    theme === "dark" ? "text-gray-400" : "text-gray-500"
-                  }`}
-                >
-                  Total
-                </span>
+                <span className="font-semibold">Final Total</span>
                 <span className="font-extrabold text-xl">
-                  {formatINR(totalPrice)}
+                  {formatINR(totalPrice - discount)}
                 </span>
               </div>
 
@@ -167,11 +204,8 @@ export default function CartPanel({
                   Clear
                 </button>
                 <button
-                  onClick={onCheckout}
-                  className={`flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold disabled:opacity-50 heme === "dark"
-              ? "border-gray-600 hover:bg-gray-700"
-              : "border-gray-300 hover:bg-gray-100"
-          }`}
+                  onClick={handleCheckout}
+                  className="flex-1 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold disabled:opacity-50"
                   disabled={cart.length === 0}
                 >
                   Checkout
