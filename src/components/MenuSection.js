@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { FaHeart, FaRegHeart, FaDownload } from "react-icons/fa";
 
 export default function MenuSection({
   id = "menu",
@@ -15,6 +15,7 @@ export default function MenuSection({
   toggleFavorite,
   addToCart,
   setSelectedItem,
+  handleDownloadPDF,
 }) {
   return (
     <section id={id} className="py-16">
@@ -43,17 +44,26 @@ export default function MenuSection({
             ))}
           </div>
 
-          {/* Search */}
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search items..."
-            className={`w-full md:w-80 px-4 py-2 rounded-lg outline-none border ${
-              theme === "dark"
-                ? "bg-gray-900 border-gray-700"
-                : "bg-white border-gray-200"
-            }`}
-          />
+          {/* Search + Download */}
+          <div className="flex items-center gap-3 w-full md:w-auto">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search items..."
+              className={`w-full md:w-80 px-4 py-2 rounded-lg outline-none border ${
+                theme === "dark"
+                  ? "bg-gray-900 border-gray-700"
+                  : "bg-white border-gray-200"
+              }`}
+            />
+            <button
+              onClick={handleDownloadPDF}
+              className="group flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            >
+              <FaDownload className="transition-transform duration-300 group-hover:-translate-y-1 group-hover:scale-110" />
+              <span className="hidden md:inline">Download Menu</span>
+            </button>
+          </div>
         </div>
 
         {/* Grid */}
