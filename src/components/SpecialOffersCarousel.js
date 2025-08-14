@@ -21,7 +21,32 @@ export default function SpecialOffersCarousel({ theme }) {
       description: "With any dinner meal ordered this Friday.",
       img: "https://t3.ftcdn.net/jpg/00/96/19/86/360_F_96198695_oyJg0I7ELpXI6608FI942PX9LlRRyEnd.jpg",
     },
+    {
+      id: 4,
+      title: "Half-Price Smoothies",
+      description: "All smoothies are 50% off every Monday.",
+      img: "https://i.ytimg.com/vi/CJN1n3fId_A/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDokmhsZIOM9mVq85gtY6Wvh2QsoAß",
+    },
+    {
+      id: 5,
+      title: "Free Coffee Refills",
+      description: "Unlimited refills on drip coffee all week.",
+      img: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800",
+    },
+    {
+      id: 6,
+      title: "Lunch Combo Deal",
+      description: "Get a sandwich, drink, and snack for $10.",
+      img: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800",
+    },
+    {
+      id: 7,
+      title: "Weekend Happy Hour",
+      description: "50% off select beverages from 4 PM to 6 PM.",
+      img: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800",
+    }
   ];
+  
 
   const settings = {
     dots: true,
