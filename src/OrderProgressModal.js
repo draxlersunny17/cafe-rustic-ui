@@ -104,7 +104,11 @@ export default function OrderProgressModal({ isOpen, onClose, theme }) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          onClick={onClose}
+          onClick={() => {
+            if (step >= STEPS.length - 1) {
+              onClose();
+            }
+          }}
         >
           <motion.div
             className={`${bgColor} rounded-2xl p-8 max-w-lg w-full shadow-2xl relative`}
