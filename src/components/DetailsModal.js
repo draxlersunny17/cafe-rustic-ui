@@ -7,6 +7,7 @@ export default function DetailsModal({
   addToCart,
   formatINR,
   theme,
+  setVariantItem
 }) {
   if (!item) return null;
 
@@ -94,7 +95,13 @@ export default function DetailsModal({
                     Close
                   </button>
                   <button
-                    onClick={() => addToCart(item, 1)}
+                    onClick={() => {
+                      if (item.variants) {
+                        setVariantItem(item); // opens modal
+                      } else {
+                        addToCart(item);
+                      }
+                    }}
                     className={`px-4 py-2 rounded border ${
                       theme === "dark"
                         ? "border-gray-600 hover:bg-gray-700"

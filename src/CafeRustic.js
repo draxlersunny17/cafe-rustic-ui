@@ -17,17 +17,16 @@ import jsPDF from "jspdf";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import menuData from './jsons/menuData.json';
-
+import menuData from "./jsons/menuData.json";
+import VariantSelector from "./components/VariantSelector";
 
 // If you already have MENU elsewhere, import it and delete this block.
 
 const MENU = menuData.menu;
 const CATEGORIES = menuData.categories;
 
-
 export default function CafeRustic() {
-
+  const [variantItem, setVariantItem] = useState(null);
   // THEME
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
@@ -91,28 +90,38 @@ export default function CafeRustic() {
     localStorage.setItem("cafe_cart_v2", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (menuItem, qty = 1) => {
+  const addToCart = (menuItem, qty = 1, variant = null) => {
+    const idWithVariant = variant
+      ? `${menuItem.id}-${variant.name.replace(/\s+/g, "")}`
+      : menuItem.id;
+  
     setCart((prev) => {
-      const idx = prev.findIndex((p) => p.id === menuItem.id);
+      const idx = prev.findIndex((p) => p.id === idWithVariant);
+  
       if (idx >= 0) {
         const copy = [...prev];
         copy[idx] = { ...copy[idx], qty: copy[idx].qty + qty };
         return copy;
       }
+  
       return [
         ...prev,
         {
-          id: menuItem.id,
-          name: menuItem.name,
-          price: menuItem.price,
+          id: idWithVariant,
+          name: variant
+            ? `${menuItem.name} (${variant.name})`
+            : menuItem.name,
+          price: variant ? variant.price : menuItem.price,
           calories: menuItem.calories,
           image: menuItem.img,
-          qty,
-        },
+          qty
+        }
       ];
     });
     setCartOpen(true);
   };
+  
+
   const incQty = (id) =>
     setCart((prev) =>
       prev.map((it) => (it.id === id ? { ...it, qty: it.qty + 1 } : it))
@@ -304,6 +313,47 @@ export default function CafeRustic() {
     doc.save("CafeRustic_Menu.pdf");
   };
 
+  const reorderOrder = (order) => {
+    order.items.forEach((it) => {
+      let baseId = it.id;
+      let variantName = null;
+  
+      // Check if the item has a variant format: "<id>-<variant>"
+      const possibleMenuItem = MENU.find((m) => m.id === it.id);
+      if (!possibleMenuItem && it.id.includes("(")) {
+        // If the stored id has variant in brackets, parse it from name
+        const match = it.name.match(/\(([^)]+)\)/);
+        if (match) {
+          variantName = match[1];
+          // Remove last -Variant part to get base id
+          baseId = it.id.split("-")[0];
+        }
+      } else if (!possibleMenuItem && it.id.includes("-")) {
+        // Variant stored with dash format
+        const parts = it.id.split("-");
+        baseId = parts[0] + (parts.length > 2 ? `-${parts[1]}` : "");
+        variantName = parts[parts.length - 1];
+      }
+  
+      const menuItem = MENU.find((m) => m.id === baseId);
+  
+      if (menuItem) {
+        if (variantName) {
+          const variantObj = menuItem.variants?.find(
+            (v) => v.name.toLowerCase() === variantName.toLowerCase()
+          );
+          addToCart(menuItem, it.qty, variantObj || null);
+        } else {
+          addToCart(menuItem, it.qty);
+        }
+      }
+    });
+  
+    toast.success(`Order #${order.orderNumber} added to cart!`);
+  };
+  
+  
+
   return (
     <>
       <ToastContainer position="top-center" autoClose={3000} theme={theme} />
@@ -380,6 +430,7 @@ export default function CafeRustic() {
           addToCart={addToCart}
           setSelectedItem={setSelectedItem}
           handleDownloadPDF={handleDownloadPDF}
+          setVariantItem={setVariantItem}
         />
 
         <Reviews theme={theme} />
@@ -387,16 +438,7 @@ export default function CafeRustic() {
           orderHistory={orderHistory}
           formatINR={formatINR}
           theme={theme}
-          onReorder={(order) => {
-            order.items.forEach((it) => {
-              // Rebuild the item from the MENU array so all fields exist
-              const menuItem = MENU.find((m) => m.id === it.id);
-              if (menuItem) {
-                addToCart(menuItem, it.qty);
-              }
-            });
-            toast.success(`Order #${order.orderNumber} added to cart!`);
-          }}
+          onReorder={reorderOrder}
         />
 
         <Contact theme={theme} />
@@ -409,6 +451,7 @@ export default function CafeRustic() {
           addToCart={addToCart}
           theme={theme}
           formatINR={formatINR}
+          setVariantItem={setVariantItem}
         />
 
         {/* Hidden trigger for FloatingButtons -> Cart open */}
@@ -450,6 +493,18 @@ export default function CafeRustic() {
           orderNumber={orderNumber}
           theme={theme}
         />
+
+        {variantItem && (
+          <VariantSelector
+            item={variantItem}
+            theme={theme}
+            onSelect={(variant) => {
+              addToCart(variantItem, 1, variant);
+              setVariantItem(null);
+            }}
+            onClose={() => setVariantItem(null)}
+          />
+        )}
       </div>
     </>
   );

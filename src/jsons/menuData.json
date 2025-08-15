@@ -201,8 +201,8 @@
       "img": "https://www.kingarthurbaking.com/sites/default/files/styles/featured_image/public/2024-07/Cinnamon-Bagels-1-1.jpg?itok=e2_xhVuZ"
     },
     {
-      "id": "grilled-chicken-sandwich",
-      "name": "Grilled Chicken Sandwich",
+      "id": "sandwich",
+      "name": "Sandwich",
       "price": 320,
       "category": "Brunch",
       "desc": "Juicy grilled chicken breast served on a toasted bun with lettuce, tomato, and mayo.",
@@ -211,12 +211,16 @@
       "ingredients": "Chicken breast, lettuce, tomato, bun, mayonnaise",
       "prep": "Grill chicken, toast bun, assemble with toppings.",
       "origin": "Inspired by American deli sandwiches.",
-      "img": "https://justbakedcake.com/wp-content/uploads/2021/09/Chicken-Grilled-sandwich-1.jpg"
+      "img": "https://justbakedcake.com/wp-content/uploads/2021/09/Chicken-Grilled-sandwich-1.jpg",
+      "variants": [
+        { "name": "Veg", "price": 280 },
+        { "name": "Chicken", "price": 320 }
+      ]
     },
     {
-      "id": "veggie-wrap",
-      "name": "Veggie Wrap",
-      "price": 280,
+      "id": "wrap",
+      "name": "Wrap",
+      "price": 300,
       "category": "Brunch",
       "desc": "Fresh mixed vegetables, hummus, and greens wrapped in a whole wheat tortilla.",
       "shortDesc": "Light, healthy, and satisfying.",
@@ -224,12 +228,16 @@
       "ingredients": "Tortilla, hummus, lettuce, tomato, cucumber, bell peppers",
       "prep": "Spread hummus on tortilla, add veggies, and roll tightly.",
       "origin": "Popular in Mediterranean-inspired cuisine.",
-      "img": "https://www.plantperks.com/wp-content/uploads/2020/02/IMG_0198-Edit.jpg"
+      "img": "https://dyvn6jpt1f0d3.cloudfront.net/wp-content/uploads/2020/04/19145837/MD_1080X-BPM-Recipe_BLT-Chipotle-Chicken-Wrap-e1710863375971-6.jpg",
+      "variants": [
+        { "name": "Veg", "price": 280 },
+        { "name": "Chicken", "price": 300 }
+      ]
     },
     {
-      "id": "chicken-burger",
-      "name": "Chicken Burger",
-      "price": 400,
+      "id": "burger",
+      "name": "Burger",
+      "price": 300,
       "category": "Brunch",
       "desc": "Grilled chicken patty with cheese, lettuce, tomato, and pickles on a toasted bun.",
       "shortDesc": "Hearty and classic burger favorite.",
@@ -237,7 +245,11 @@
       "ingredients": "Chicken patty, cheese, lettuce, tomato, pickles, bun",
       "prep": "Grill patty, toast bun, assemble burger with toppings.",
       "origin": "Classic American-style burger.",
-      "img": "https://sinfullyspicy.com/wp-content/uploads/2023/09/1200-by-1200-images.jpg"
+      "img": "https://sinfullyspicy.com/wp-content/uploads/2023/09/1200-by-1200-images.jpg",
+      "variants": [
+        { "name": "Veg", "price": 260 },
+        { "name": "Chicken", "price": 300 }
+      ]
     },
     {
       "id": "caesar-salad",

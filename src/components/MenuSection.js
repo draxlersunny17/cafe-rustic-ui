@@ -16,6 +16,7 @@ export default function MenuSection({
   addToCart,
   setSelectedItem,
   handleDownloadPDF,
+  setVariantItem
 }) {
   return (
     <section id={id} className="py-16">
@@ -113,7 +114,13 @@ export default function MenuSection({
 
                   <div className="mt-4 flex gap-2">
                     <button
-                      onClick={() => addToCart(item, 1)}
+                      onClick={() => {
+                        if (item.variants) {
+                          setVariantItem(item); // opens modal
+                        } else {
+                          addToCart(item);
+                        }
+                      }}
                       className="px-4 py-2 rounded-lg bg-amber-400 hover:bg-amber-500 text-gray-900 font-semibold"
                     >
                       Add to Cart
