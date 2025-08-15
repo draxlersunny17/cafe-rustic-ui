@@ -19,7 +19,9 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import menuData from "./jsons/menuData.json";
 import VariantSelector from "./components/VariantSelector";
-
+import SignInModal from "./components/SignInModal";
+import SignUpModal from "./components/SignUpModal";
+import ProfileModal from "./components/ProfileModal";
 // If you already have MENU elsewhere, import it and delete this block.
 
 const MENU = menuData.menu;
@@ -91,36 +93,37 @@ export default function CafeRustic() {
   }, [cart]);
 
   const addToCart = (menuItem, qty = 1, variant = null) => {
+    if (!userProfile) {
+      toast.warning("Please sign in to add items to your cart!");
+      setSignInOpen(true);
+      return;
+    }
+
     const idWithVariant = variant
       ? `${menuItem.id}-${variant.name.replace(/\s+/g, "")}`
       : menuItem.id;
-  
+
     setCart((prev) => {
       const idx = prev.findIndex((p) => p.id === idWithVariant);
-  
       if (idx >= 0) {
         const copy = [...prev];
         copy[idx] = { ...copy[idx], qty: copy[idx].qty + qty };
         return copy;
       }
-  
       return [
         ...prev,
         {
           id: idWithVariant,
-          name: variant
-            ? `${menuItem.name} (${variant.name})`
-            : menuItem.name,
+          name: variant ? `${menuItem.name} (${variant.name})` : menuItem.name,
           price: variant ? variant.price : menuItem.price,
           calories: menuItem.calories,
           image: menuItem.img,
-          qty
-        }
+          qty,
+        },
       ];
     });
     setCartOpen(true);
   };
-  
 
   const incQty = (id) =>
     setCart((prev) =>
@@ -252,25 +255,25 @@ export default function CafeRustic() {
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-  
+
     const bgImgUrl = "/images/caferusticmenu.jpg"; // Ensure correct path
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = bgImgUrl;
-  
+
     img.onload = () => {
       const addBackground = () => {
         doc.addImage(img, "JPEG", 0, 0, 210, 297, "", "FAST"); // A4 full page
       };
-  
+
       addBackground();
-  
+
       // Start Y position just below "FOOD MENU"
-      let y = 55; 
+      let y = 55;
       const lineHeight = 7;
-      const leftMargin = 25; 
-      const rightMargin = 185; 
-  
+      const leftMargin = 25;
+      const rightMargin = 185;
+
       MENU.forEach((item) => {
         // Page break with background re-add
         if (y > 270) {
@@ -278,12 +281,12 @@ export default function CafeRustic() {
           addBackground();
           y = 55;
         }
-  
+
         // Item Name
         doc.setFont("helvetica", "bold");
         doc.setFontSize(14);
         doc.text(item.name, leftMargin, y);
-      
+
         if (!item.variants || item.variants.length === 0) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(12);
@@ -293,19 +296,21 @@ export default function CafeRustic() {
             y
           );
         }
-      
+
         y += lineHeight;
-      
+
         // Short Description
         if (item.shortDesc) {
           doc.setFont("helvetica", "italic");
           doc.setFontSize(10);
           doc.setTextColor(50);
-          doc.text(item.shortDesc, leftMargin, y, { maxWidth: rightMargin - leftMargin });
+          doc.text(item.shortDesc, leftMargin, y, {
+            maxWidth: rightMargin - leftMargin,
+          });
           doc.setTextColor(0);
           y += lineHeight;
         }
-      
+
         // Variants
         if (item.variants && item.variants.length > 0) {
           item.variants.forEach((variant) => {
@@ -325,32 +330,24 @@ export default function CafeRustic() {
             y += lineHeight;
           });
         }
-  
+
         y += 5; // small space between items
       });
-  
+
       // Footer
       doc.setFont("helvetica", "italic");
       doc.setFontSize(9);
       doc.text("Thank you for dining with us!", 105, 290, { align: "center" });
-  
+
       doc.save("CafeRustic_Menu.pdf");
     };
   };
-  
-  
-  
-  
-  
-  
-  
-  
 
   const reorderOrder = (order) => {
     order.items.forEach((it) => {
       let baseId = it.id;
       let variantName = null;
-  
+
       // Check if the item has a variant format: "<id>-<variant>"
       const possibleMenuItem = MENU.find((m) => m.id === it.id);
       if (!possibleMenuItem && it.id.includes("(")) {
@@ -367,9 +364,9 @@ export default function CafeRustic() {
         baseId = parts[0] + (parts.length > 2 ? `-${parts[1]}` : "");
         variantName = parts[parts.length - 1];
       }
-  
+
       const menuItem = MENU.find((m) => m.id === baseId);
-  
+
       if (menuItem) {
         if (variantName) {
           const variantObj = menuItem.variants?.find(
@@ -381,11 +378,39 @@ export default function CafeRustic() {
         }
       }
     });
-  
+
     toast.success(`Order #${order.orderNumber} added to cart!`);
   };
-  
-  
+
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [signUpOpen, setSignUpOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(
+    () => JSON.parse(localStorage.getItem("userProfile")) || null
+  );
+
+  const handleSignIn = (profileData, isSignUp = false) => {
+    setUserProfile(profileData);
+    localStorage.setItem("userProfile", JSON.stringify(profileData));
+
+    // If this is from SignUp — clear history & points
+    if (isSignUp) {
+      setOrderHistory([]);
+      setLoyaltyPoints(0);
+      localStorage.removeItem("orderHistory");
+      localStorage.setItem("loyaltyPoints", "0");
+      localStorage.removeItem("cafe_cart_v2");
+    }
+
+    setSignInOpen(false);
+    setSignUpOpen(false);
+  };
+
+  const handleLogout = () => {
+    setUserProfile(null);
+    localStorage.removeItem("userProfile");
+    setProfileOpen(false);
+  };
 
   return (
     <>
@@ -402,6 +427,9 @@ export default function CafeRustic() {
           toggleTheme={toggleTheme}
           setMenuOpen={setMenuOpen}
           menuOpen={menuOpen}
+          userProfile={userProfile}
+          setProfileOpen={setProfileOpen}
+          setSignInOpen={setSignInOpen}
         />
 
         {/* MOBILE MENU (simple anchor links) */}
@@ -474,7 +502,7 @@ export default function CafeRustic() {
           onReorder={reorderOrder}
         />
 
-        <Contact theme={theme} />
+        <Contact theme={theme} userProfile={userProfile} />
 
         <Footer />
 
@@ -538,6 +566,36 @@ export default function CafeRustic() {
             onClose={() => setVariantItem(null)}
           />
         )}
+
+        <ProfileModal
+          open={profileOpen}
+          onClose={() => setProfileOpen(false)}
+          theme={theme}
+          userProfile={userProfile}
+          loyaltyPoints={loyaltyPoints}
+          onLogout={handleLogout}
+        />
+
+        <SignInModal
+          isOpen={signInOpen}
+          onClose={() => setSignInOpen(false)}
+          onSignIn={handleSignIn}
+          onSwitchToSignUp={() => {
+            setSignInOpen(false);
+            setSignUpOpen(true);
+          }}
+          theme={theme}
+        />
+        <SignUpModal
+          isOpen={signUpOpen} // ✅ correct prop
+          onClose={() => setSignUpOpen(false)}
+          onSignUp={(profileData) => handleSignIn(profileData, true)}
+          onSwitchToSignIn={() => {
+            setSignUpOpen(false);
+            setSignInOpen(true);
+          }}
+          theme={theme}
+        />
       </div>
     </>
   );
