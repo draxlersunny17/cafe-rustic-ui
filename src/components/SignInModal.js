@@ -186,6 +186,17 @@ export default function SignInModal({
                   : "bg-gray-100 border-gray-300"
               }`}
             />
+            <div className="flex justify-between items-center">
+              <span
+                className="text-sm text-blue-500 hover:underline cursor-pointer"
+                onClick={() => {
+                  onClose();
+                  onSwitchToSignUp();
+                }}
+              >
+                Don’t have an account? Sign Up
+              </span>
+            </div>
 
             {!otpSent ? (
               <button

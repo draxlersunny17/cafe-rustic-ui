@@ -7,12 +7,40 @@ export default function ProfilePanel({
   theme,
   userProfile,
   loyaltyPoints,
-  loyaltyGoal = 100, // points needed for next reward
-  onPreOrder,
+  onLogout,
   onContact,
   onShareReferral,
 }) {
-  const progressPercentage = Math.min((loyaltyPoints / loyaltyGoal) * 100, 100);
+  // Define loyalty tiers
+  const loyaltyTiers = [
+    { name: "Bronze", minPoints: 0, color: "bg-orange-500" },
+    { name: "Silver", minPoints: 500, color: "bg-teal-400" },
+    { name: "Gold", minPoints: 2000, color: "bg-yellow-400" },
+    { name: "Diamond", minPoints: 5000, color: "bg-cyan-400" },
+    { name: "Platinum", minPoints: 10000, color: "bg-purple-600" },
+  ];
+
+  // Determine current tier
+  const currentTier =
+    loyaltyTiers
+      .slice()
+      .reverse()
+      .find((tier) => loyaltyPoints >= tier.minPoints) || loyaltyTiers[0];
+
+  // Determine next tier
+  const nextTier = loyaltyTiers.find(
+    (tier) => tier.minPoints > currentTier.minPoints
+  );
+
+  // Progress to next tier
+  const progressToNextTier = nextTier
+    ? Math.min(
+        ((loyaltyPoints - currentTier.minPoints) /
+          (nextTier.minPoints - currentTier.minPoints)) *
+          100,
+        100
+      )
+    : 100; // Maxed out
 
   return (
     <div
@@ -51,7 +79,7 @@ export default function ProfilePanel({
           <div className="flex-1 overflow-auto p-4 space-y-4">
             {userProfile ? (
               <>
-                {/* Profile Info */}
+                {/* Profile Info with Tier Badge */}
                 <div
                   className={`p-4 rounded-lg shadow-md ${
                     theme === "dark" ? "bg-gray-800" : "bg-gray-50"
@@ -59,10 +87,16 @@ export default function ProfilePanel({
                 >
                   <div className="flex items-center space-x-3">
                     <span className="text-amber-500 text-xl">👤</span>
-                    <p className="font-semibold text-lg">
+                    <p className="font-semibold text-lg flex items-center">
                       {userProfile.fullName}
+                      <span
+                        className={`ml-2 px-2 py-1 rounded text-white text-xs ${currentTier.color}`}
+                      >
+                        {currentTier.name}
+                      </span>
                     </p>
                   </div>
+
                   <div className="flex items-center space-x-3">
                     <span className="text-blue-500 text-lg">📧</span>
                     <p className="text-sm text-gray-400">
@@ -75,7 +109,8 @@ export default function ProfilePanel({
                   </div>
                 </div>
 
-                {/* Loyalty Points */}
+                {/* Loyalty Progress */}
+
                 <div
                   className={`p-4 rounded-lg ${
                     theme === "dark"
@@ -85,22 +120,23 @@ export default function ProfilePanel({
                 >
                   <div className="flex justify-between font-semibold">
                     <span>Loyalty Points: {loyaltyPoints} pts</span>
-                    <span>{Math.floor(progressPercentage)}%</span>
+                    <span>{Math.floor(progressToNextTier)}%</span>
                   </div>
                   <div className="w-full h-3 rounded-full bg-gray-300 dark:bg-gray-700 overflow-hidden">
                     <div
-                      className="h-full bg-amber-500"
-                      style={{ width: `${progressPercentage}%` }}
+                      className={`h-full ${currentTier.color}`}
+                      style={{ width: `${progressToNextTier}%` }}
                     ></div>
                   </div>
                   <p className="text-xs text-gray-200 dark:text-gray-400">
-                    {loyaltyPoints} / {loyaltyGoal} points to next reward
+                    {loyaltyPoints} /{" "}
+                    {nextTier ? nextTier.minPoints : loyaltyPoints} pts to{" "}
+                    {nextTier ? nextTier.name : "Max Tier"}
                   </p>
                 </div>
 
                 {/* Quick Actions */}
                 <div className="space-y-2">
-                  {/* New: View Orders */}
                   <button
                     onClick={() => {
                       document
@@ -111,9 +147,21 @@ export default function ProfilePanel({
                   >
                     View Orders
                   </button>
+
+                  <button
+                    onClick={() => {
+                      document
+                        .getElementById("contact")
+                        .scrollIntoView({ behavior: "smooth" });
+                      onContact && onContact();
+                    }}
+                    className="w-full px-4 py-2 rounded-lg bg-green-500 hover:bg-green-600 text-white font-semibold"
+                  >
+                    Book Table
+                  </button>
                 </div>
 
-                {/* Referral Code */}
+                {/* Referral */}
                 <div
                   className={`p-3 rounded-lg font-semibold ${
                     theme === "dark"
@@ -129,6 +177,14 @@ export default function ProfilePanel({
                     Share
                   </button>
                 </div>
+
+                {/* Logout */}
+                <button
+                  onClick={onLogout}
+                  className="w-full px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600 text-white font-semibold"
+                >
+                  Logout
+                </button>
               </>
             ) : (
               <p className="text-center text-gray-500">

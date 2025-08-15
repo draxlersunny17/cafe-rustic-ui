@@ -48,7 +48,7 @@ export default function SignUpModal({
     const newUser = {
       id: mockUsers.length + 1,
       fullName: `${form.firstName} ${form.lastName}`,
-      occupation: form.occupation || "Food Lover",
+      occupation: form.occupation ,
       email: form.email,
       phone: form.phone,
       password: form.password,
