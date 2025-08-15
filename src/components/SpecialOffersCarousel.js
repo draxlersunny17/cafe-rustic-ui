@@ -36,7 +36,7 @@ export default function SpecialOffersCarousel({ theme }) {
     {
       id: 6,
       title: "Lunch Combo Deal",
-      description: "Get a sandwich, drink, and snack for $10.",
+      description: "Get a sandwich, drink, and snack for Rs.300.",
       img: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800",
     },
     {

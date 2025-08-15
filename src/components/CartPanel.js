@@ -14,9 +14,9 @@ export default function CartPanel({
   formatINR,
   onCheckout,
   theme,
-  loyaltyPoints,       // ✅ new prop
-  redeemPoints,        // ✅ new prop
-  setRedeemPoints,     // ✅ new prop
+  loyaltyPoints,  
+  redeemPoints,   
+  setRedeemPoints,
 }) {
   const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice); // prevent over-discount
 
