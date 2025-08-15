@@ -253,85 +253,97 @@ export default function CafeRustic() {
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
   
-    // Title
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(22);
-    doc.text("Cafe Rustic Menu", 105, 15, { align: "center" });
+    const bgImgUrl = "/images/caferusticmenu.jpg"; // Ensure correct path
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.src = bgImgUrl;
   
-    // Decorative line
-    doc.setDrawColor(150);
-    doc.line(10, 20, 200, 20);
+    img.onload = () => {
+      const addBackground = () => {
+        doc.addImage(img, "JPEG", 0, 0, 210, 297, "", "FAST"); // A4 full page
+      };
   
-    let y = 30;
-    const lineHeight = 7;
+      addBackground();
   
-    MENU.forEach((item) => {
-      // New page if needed
-      if (y > 280) {
-        doc.addPage();
-        y = 20;
-      }
+      // Start Y position just below "FOOD MENU"
+      let y = 55; 
+      const lineHeight = 7;
+      const leftMargin = 25; 
+      const rightMargin = 185; 
   
-      // Main item name
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(14);
-      doc.text(item.name, 10, y);
+      MENU.forEach((item) => {
+        // Page break with background re-add
+        if (y > 270) {
+          doc.addPage();
+          addBackground();
+          y = 55;
+        }
   
-      // Price only if no variants
-      if (!item.variants || item.variants.length === 0) {
-        doc.setFont("helvetica", "normal");
-        doc.setFontSize(12);
-        doc.text(
-          `Rs. ${item.price}`,
-          200 - doc.getTextWidth(`Rs. ${item.price}`) - 10,
-          y
-        );
-      }
-  
-      y += lineHeight;
-  
-      // Short description
-      if (item.shortDesc) {
-        doc.setFont("helvetica", "italic");
-        doc.setFontSize(10);
-        doc.setTextColor(100);
-        doc.text(item.shortDesc, 10, y, { maxWidth: 180 });
-        doc.setTextColor(0);
-        y += lineHeight;
-      }
-  
-      // Variants (if any)
-      if (item.variants && item.variants.length > 0) {
-        item.variants.forEach((variant) => {
-          if (y > 280) {
-            doc.addPage();
-            y = 20;
-          }
+        // Item Name
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(14);
+        doc.text(item.name, leftMargin, y);
+      
+        if (!item.variants || item.variants.length === 0) {
           doc.setFont("helvetica", "normal");
-          doc.setFontSize(11);
-          doc.text(`- ${variant.name}`, 15, y);
+          doc.setFontSize(12);
           doc.text(
-            `Rs. ${variant.price}`,
-            200 - doc.getTextWidth(`Rs. ${variant.price}`) - 10,
+            `Rs. ${item.price}`,
+            rightMargin - doc.getTextWidth(`Rs. ${item.price}`),
             y
           );
+        }
+      
+        y += lineHeight;
+      
+        // Short Description
+        if (item.shortDesc) {
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(10);
+          doc.setTextColor(50);
+          doc.text(item.shortDesc, leftMargin, y, { maxWidth: rightMargin - leftMargin });
+          doc.setTextColor(0);
           y += lineHeight;
-        });
-      }
+        }
+      
+        // Variants
+        if (item.variants && item.variants.length > 0) {
+          item.variants.forEach((variant) => {
+            if (y > 280) {
+              doc.addPage();
+              addBackground();
+              y = 55;
+            }
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(11);
+            doc.text(`- ${variant.name}`, leftMargin + 5, y);
+            doc.text(
+              `Rs. ${variant.price}`,
+              rightMargin - doc.getTextWidth(`Rs. ${variant.price}`),
+              y
+            );
+            y += lineHeight;
+          });
+        }
   
-      // Divider
-      doc.setDrawColor(220);
-      doc.line(10, y, 200, y);
-      y += 5;
-    });
+        y += 5; // small space between items
+      });
   
-    // Footer
-    doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    doc.text("Thank you for dining with us!", 105, 290, { align: "center" });
+      // Footer
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      doc.text("Thank you for dining with us!", 105, 290, { align: "center" });
   
-    doc.save("CafeRustic_Menu.pdf");
+      doc.save("CafeRustic_Menu.pdf");
+    };
   };
+  
+  
+  
+  
+  
+  
+  
   
 
   const reorderOrder = (order) => {
