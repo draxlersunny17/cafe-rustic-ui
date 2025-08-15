@@ -252,66 +252,87 @@ export default function CafeRustic() {
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
-
+  
     // Title
     doc.setFont("helvetica", "bold");
     doc.setFontSize(22);
     doc.text("Cafe Rustic Menu", 105, 15, { align: "center" });
-
+  
     // Decorative line
     doc.setDrawColor(150);
     doc.line(10, 20, 200, 20);
-
+  
     let y = 30;
     const lineHeight = 7;
-
-    MENU.forEach((item, index) => {
-      // Add new page if content goes beyond page height
+  
+    MENU.forEach((item) => {
+      // New page if needed
       if (y > 280) {
         doc.addPage();
         y = 20;
       }
-
-      // Item name & price
+  
+      // Main item name
       doc.setFont("helvetica", "bold");
       doc.setFontSize(14);
       doc.text(item.name, 10, y);
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(12);
-      doc.text(
-        `Rs. ${item.price}`,
-        200 - doc.getTextWidth(`Rs. ${item.price}`) - 10,
-        y
-      );
-
+  
+      // Price only if no variants
+      if (!item.variants || item.variants.length === 0) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(12);
+        doc.text(
+          `Rs. ${item.price}`,
+          200 - doc.getTextWidth(`Rs. ${item.price}`) - 10,
+          y
+        );
+      }
+  
       y += lineHeight;
-
-      // Item description (smaller, gray text)
+  
+      // Short description
       if (item.shortDesc) {
         doc.setFont("helvetica", "italic");
         doc.setFontSize(10);
         doc.setTextColor(100);
         doc.text(item.shortDesc, 10, y, { maxWidth: 180 });
         doc.setTextColor(0);
-        y += lineHeight + 3;
-      } else {
-        y += 3;
+        y += lineHeight;
       }
-
-      // Divider line between items
+  
+      // Variants (if any)
+      if (item.variants && item.variants.length > 0) {
+        item.variants.forEach((variant) => {
+          if (y > 280) {
+            doc.addPage();
+            y = 20;
+          }
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(11);
+          doc.text(`- ${variant.name}`, 15, y);
+          doc.text(
+            `Rs. ${variant.price}`,
+            200 - doc.getTextWidth(`Rs. ${variant.price}`) - 10,
+            y
+          );
+          y += lineHeight;
+        });
+      }
+  
+      // Divider
       doc.setDrawColor(220);
       doc.line(10, y, 200, y);
       y += 5;
     });
-
+  
     // Footer
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
     doc.text("Thank you for dining with us!", 105, 290, { align: "center" });
-
+  
     doc.save("CafeRustic_Menu.pdf");
   };
+  
 
   const reorderOrder = (order) => {
     order.items.forEach((it) => {
