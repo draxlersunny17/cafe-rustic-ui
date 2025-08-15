@@ -17,43 +17,31 @@ import jsPDF from "jspdf";
 import { toast } from "react-toastify";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import menuData from "./jsons/menuData.json";
 import VariantSelector from "./components/VariantSelector";
 import SignInModal from "./components/SignInModal";
 import SignUpModal from "./components/SignUpModal";
 import ProfileModal from "./components/ProfileModal";
-// If you already have MENU elsewhere, import it and delete this block.
-
-const MENU = menuData.menu;
-const CATEGORIES = menuData.categories;
+import { fetchMenu } from "./fetchMenu";
 
 export default function CafeRustic() {
   const [variantItem, setVariantItem] = useState(null);
-  // THEME
+  const [loading, setLoading] = useState(true);
+  const [menuItems, setMenuItems] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  const [signUpOpen, setSignUpOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState(
+    () => JSON.parse(localStorage.getItem("userProfile")) || null
+  );
   const [theme, setTheme] = useState(
     () => localStorage.getItem("theme") || "light"
   );
-  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
-  useEffect(() => {
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  // NAV
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  // FILTERS (persist)
   const [category, setCategory] = useState(
     () => localStorage.getItem("category") || "All"
   );
   const [query, setQuery] = useState(() => localStorage.getItem("query") || "");
-  useEffect(() => {
-    localStorage.setItem("category", category);
-    localStorage.setItem("query", query);
-  }, [category, query]);
-
-  // FAVORITES (persist)
   const [favorites, setFavorites] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem("favorites")) || [];
@@ -61,12 +49,114 @@ export default function CafeRustic() {
       return [];
     }
   });
+  const [favPulse, setFavPulse] = useState(false);
+  const [cart, setCart] = useState(() => {
+    try {
+      const raw = localStorage.getItem("cafe_cart_v2");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [selectedItem, setSelectedItem] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [orderHistory, setOrderHistory] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("orderHistory")) || [];
+    } catch {
+      return [];
+    }
+  });
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [orderNumber, setOrderNumber] = useState(null);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(
+    () => parseInt(localStorage.getItem("loyaltyPoints")) || 0
+  );
+  const [redeemPoints, setRedeemPoints] = useState(0);
+
+  const formatINR = (n) => `₹${n}`;
+
+  // ----------- USEEFFECT HOOKS -----------------
+  useEffect(() => {
+    const getMenu = async () => {
+      setLoading(true);
+      try {
+        const data = await fetchMenu();
+        setMenuItems(data || []);
+        const uniqueCategories = [
+          "All",
+          "Favorites",
+          ...new Set(data.map((item) => item.category)),
+        ];
+        setCategories(uniqueCategories);
+      } catch (error) {
+        console.error("Failed to fetch menu:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    getMenu();
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.remove("light", "dark");
+    document.documentElement.classList.add(theme);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
+
+  useEffect(() => {
+    localStorage.setItem("category", category);
+    localStorage.setItem("query", query);
+  }, [category, query]);
   useEffect(() => {
     localStorage.setItem("favorites", JSON.stringify(favorites));
   }, [favorites]);
+  useEffect(() => {
+    localStorage.setItem("cafe_cart_v2", JSON.stringify(cart));
+  }, [cart]);
+  useEffect(() => {
+    localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
+  }, [orderHistory]);
+  useEffect(() => {
+    localStorage.setItem("loyaltyPoints", loyaltyPoints);
+  }, [loyaltyPoints]);
 
-  // FAVORITES pulse animation
-  const [favPulse, setFavPulse] = useState(false);
+  // ----------- MEMOIZED VALUES -----------------
+  const cartCount = useMemo(
+    () => cart.reduce((s, it) => s + it.qty, 0),
+    [cart]
+  );
+  const totalPrice = useMemo(
+    () => cart.reduce((s, it) => s + it.price * it.qty, 0),
+    [cart]
+  );
+  const totalCalories = useMemo(
+    () => cart.reduce((s, it) => s + (it.calories || 0) * it.qty, 0),
+    [cart]
+  );
+  const filteredMenu = useMemo(() => {
+    return menuItems.filter((item) => {
+      if (category === "Favorites" && !favorites.includes(item.id))
+        return false;
+      if (
+        category !== "All" &&
+        category !== "Favorites" &&
+        item.category !== category
+      )
+        return false;
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        item.name.toLowerCase().includes(q) ||
+        (item.short_desc || "").toLowerCase().includes(q) ||
+        (item.description || "").toLowerCase().includes(q)
+      );
+    });
+  }, [menuItems, category, query, favorites]);
+
+  // ----------- FUNCTIONS -----------------
+  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+
   const toggleFavorite = (id) => {
     setFavorites((prev) => {
       const isFav = prev.includes(id);
@@ -79,30 +169,15 @@ export default function CafeRustic() {
     });
   };
 
-  // CART (persist)
-  const [cart, setCart] = useState(() => {
-    try {
-      const raw = localStorage.getItem("cafe_cart_v2");
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
-  });
-  useEffect(() => {
-    localStorage.setItem("cafe_cart_v2", JSON.stringify(cart));
-  }, [cart]);
-
   const addToCart = (menuItem, qty = 1, variant = null) => {
     if (!userProfile) {
       toast.warning("Please sign in to add items to your cart!");
       setSignInOpen(true);
       return;
     }
-
     const idWithVariant = variant
       ? `${menuItem.id}-${variant.name.replace(/\s+/g, "")}`
       : menuItem.id;
-
     setCart((prev) => {
       const idx = prev.findIndex((p) => p.id === idWithVariant);
       if (idx >= 0) {
@@ -129,6 +204,7 @@ export default function CafeRustic() {
     setCart((prev) =>
       prev.map((it) => (it.id === id ? { ...it, qty: it.qty + 1 } : it))
     );
+
   const decQty = (id) =>
     setCart((prev) => {
       const found = prev.find((it) => it.id === id);
@@ -136,54 +212,11 @@ export default function CafeRustic() {
       if (found.qty <= 1) return prev.filter((it) => it.id !== id);
       return prev.map((it) => (it.id === id ? { ...it, qty: it.qty - 1 } : it));
     });
+
   const removeItem = (id) =>
     setCart((prev) => prev.filter((it) => it.id !== id));
+
   const clearCart = () => setCart([]);
-
-  const cartCount = useMemo(
-    () => cart.reduce((s, it) => s + it.qty, 0),
-    [cart]
-  );
-  const totalPrice = useMemo(
-    () => cart.reduce((s, it) => s + it.price * it.qty, 0),
-    [cart]
-  );
-  const totalCalories = useMemo(
-    () => cart.reduce((s, it) => s + (it.calories || 0) * it.qty, 0),
-    [cart]
-  );
-  const formatINR = (n) => `₹${n}`;
-
-  // DETAILS MODAL
-  const [selectedItem, setSelectedItem] = useState(null);
-
-  // CART PANEL
-  const [cartOpen, setCartOpen] = useState(false);
-
-  // ORDER HISTORY (persist)
-  const [orderHistory, setOrderHistory] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("orderHistory")) || [];
-    } catch {
-      return [];
-    }
-  });
-  useEffect(() => {
-    localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
-  }, [orderHistory]);
-
-  // ORDER PROGRESS MODAL
-  const [orderModalOpen, setOrderModalOpen] = useState(false);
-  const [orderNumber, setOrderNumber] = useState(null);
-
-  const [loyaltyPoints, setLoyaltyPoints] = useState(
-    () => parseInt(localStorage.getItem("loyaltyPoints")) || 0
-  );
-  const [redeemPoints, setRedeemPoints] = useState(0);
-
-  useEffect(() => {
-    localStorage.setItem("loyaltyPoints", loyaltyPoints);
-  }, [loyaltyPoints]);
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
@@ -224,35 +257,6 @@ export default function CafeRustic() {
     setCartOpen(false);
   };
 
-  // FILTERED MENU
-  const filteredMenu = useMemo(() => {
-    return MENU.filter((item) => {
-      if (category === "Favorites" && !favorites.includes(item.id))
-        return false;
-      if (
-        category !== "All" &&
-        category !== "Favorites" &&
-        item.category !== category
-      )
-        return false;
-      const q = query.trim().toLowerCase();
-      if (!q) return true;
-      return (
-        item.name.toLowerCase().includes(q) ||
-        (item.shortDesc || "").toLowerCase().includes(q) ||
-        (item.desc || "").toLowerCase().includes(q)
-      );
-    });
-  }, [category, query, favorites]);
-
-  //   const handleCancelOrder = () => {
-  //   setOrderHistory((prev) =>
-  //     prev.filter((o) => o.orderNumber !== orderNumber)
-  //   );
-  //   alert(`Order #${orderNumber} has been cancelled.`);
-  //   setOrderModalOpen(false);
-  // };
-
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
 
@@ -274,7 +278,7 @@ export default function CafeRustic() {
       const leftMargin = 25;
       const rightMargin = 185;
 
-      MENU.forEach((item) => {
+      menuItems.forEach((item) => {
         // Page break with background re-add
         if (y > 270) {
           doc.addPage();
@@ -287,7 +291,7 @@ export default function CafeRustic() {
         doc.setFontSize(14);
         doc.text(item.name, leftMargin, y);
 
-        if (!item.variants || item.variants.length === 0) {
+        if (!item.menu_item_variants || item.menu_item_variants.length === 0) {
           doc.setFont("helvetica", "normal");
           doc.setFontSize(12);
           doc.text(
@@ -300,11 +304,11 @@ export default function CafeRustic() {
         y += lineHeight;
 
         // Short Description
-        if (item.shortDesc) {
+        if (item.short_desc) {
           doc.setFont("helvetica", "italic");
           doc.setFontSize(10);
           doc.setTextColor(50);
-          doc.text(item.shortDesc, leftMargin, y, {
+          doc.text(item.short_desc, leftMargin, y, {
             maxWidth: rightMargin - leftMargin,
           });
           doc.setTextColor(0);
@@ -312,8 +316,8 @@ export default function CafeRustic() {
         }
 
         // Variants
-        if (item.variants && item.variants.length > 0) {
-          item.variants.forEach((variant) => {
+        if (item.menu_item_variants && item.menu_item_variants.length > 0) {
+          item.menu_item_variants.forEach((variant) => {
             if (y > 280) {
               doc.addPage();
               addBackground();
@@ -349,7 +353,7 @@ export default function CafeRustic() {
       let variantName = null;
 
       // Check if the item has a variant format: "<id>-<variant>"
-      const possibleMenuItem = MENU.find((m) => m.id === it.id);
+      const possibleMenuItem = menuItems.find((m) => m.id === it.id);
       if (!possibleMenuItem && it.id.includes("(")) {
         // If the stored id has variant in brackets, parse it from name
         const match = it.name.match(/\(([^)]+)\)/);
@@ -365,11 +369,11 @@ export default function CafeRustic() {
         variantName = parts[parts.length - 1];
       }
 
-      const menuItem = MENU.find((m) => m.id === baseId);
+      const menuItem = menuItems.find((m) => m.id === baseId);
 
       if (menuItem) {
         if (variantName) {
-          const variantObj = menuItem.variants?.find(
+          const variantObj = menuItem.menu_item_variants?.find(
             (v) => v.name.toLowerCase() === variantName.toLowerCase()
           );
           addToCart(menuItem, it.qty, variantObj || null);
@@ -381,13 +385,6 @@ export default function CafeRustic() {
 
     toast.success(`Order #${order.orderNumber} added to cart!`);
   };
-
-  const [profileOpen, setProfileOpen] = useState(false);
-  const [signInOpen, setSignInOpen] = useState(false);
-  const [signUpOpen, setSignUpOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState(
-    () => JSON.parse(localStorage.getItem("userProfile")) || null
-  );
 
   const handleSignIn = (profileData, isSignUp = false) => {
     setUserProfile(profileData);
@@ -477,22 +474,28 @@ export default function CafeRustic() {
 
         <SpecialOffersCarousel theme={theme} />
 
-        <MenuSection
-          id="menu"
-          categories={CATEGORIES}
-          theme={theme}
-          category={category}
-          setCategory={setCategory}
-          query={query}
-          setQuery={setQuery}
-          items={filteredMenu}
-          favorites={favorites}
-          toggleFavorite={toggleFavorite}
-          addToCart={addToCart}
-          setSelectedItem={setSelectedItem}
-          handleDownloadPDF={handleDownloadPDF}
-          setVariantItem={setVariantItem}
-        />
+        {loading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-gray-900 dark:border-white"></div>
+          </div>
+        ) : (
+          <MenuSection
+            id="menu"
+            categories={categories}
+            theme={theme}
+            category={category}
+            setCategory={setCategory}
+            query={query}
+            setQuery={setQuery}
+            items={filteredMenu}
+            favorites={favorites}
+            toggleFavorite={toggleFavorite}
+            addToCart={addToCart}
+            setSelectedItem={setSelectedItem}
+            handleDownloadPDF={handleDownloadPDF}
+            setVariantItem={setVariantItem}
+          />
+        )}
 
         <Reviews theme={theme} />
         <OrderHistory
@@ -587,7 +590,7 @@ export default function CafeRustic() {
           theme={theme}
         />
         <SignUpModal
-          isOpen={signUpOpen} // ✅ correct prop
+          isOpen={signUpOpen}
           onClose={() => setSignUpOpen(false)}
           onSignUp={(profileData) => handleSignIn(profileData, true)}
           onSwitchToSignIn={() => {

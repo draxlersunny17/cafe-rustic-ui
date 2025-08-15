@@ -47,7 +47,7 @@ export default function DetailsModal({
                     theme === "dark" ? "text-gray-300" : "text-gray-700"
                   }`}
                 >
-                  {item.desc}
+                  {item.description}
                 </p>
                 <p className="mt-3 font-semibold">
                   Calories: {item.calories} kcal
@@ -96,7 +96,7 @@ export default function DetailsModal({
                   </button>
                   <button
                     onClick={() => {
-                      if (item.variants) {
+                      if (item.menu_item_variants && item.menu_item_variants.length > 0) {
                         setVariantItem(item); // opens modal
                       } else {
                         addToCart(item);

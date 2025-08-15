@@ -106,16 +106,16 @@ export default function MenuSection({
                     <h3 className="font-semibold text-lg">{item.name}</h3>
                     <span className="font-bold">₹{item.price}</span>
                   </div>
-                  {item.shortDesc && (
+                  {item.short_desc && (
                     <p className="text-sm text-gray-500 mt-1">
-                      {item.shortDesc}
+                      {item.short_desc}
                     </p>
                   )}
 
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => {
-                        if (item.variants) {
+                        if (item.menu_item_variants && item.menu_item_variants.length > 0) {
                           setVariantItem(item); // opens modal
                         } else {
                           addToCart(item);

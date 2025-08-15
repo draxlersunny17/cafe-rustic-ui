@@ -12,7 +12,7 @@ export default function VariantSelector({ item, onSelect, onClose, theme }) {
           Choose Variant for {item.name}
         </h2>
         <div className="space-y-3">
-          {item.variants.map((variant) => (
+          {item.menu_item_variants?.map((variant) => (
             <button
               key={variant.name}
               onClick={() => onSelect(variant)}
