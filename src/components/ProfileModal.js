@@ -88,7 +88,7 @@ export default function ProfilePanel({
                   <div className="flex items-center space-x-3">
                     <span className="text-amber-500 text-xl">👤</span>
                     <p className="font-semibold text-lg flex items-center">
-                      {userProfile.fullName}
+                      {userProfile.name}
                       <span
                         className={`ml-2 px-2 py-1 rounded text-white text-xs ${currentTier.color}`}
                       >
@@ -100,7 +100,7 @@ export default function ProfilePanel({
                   <div className="flex items-center space-x-3">
                     <span className="text-blue-500 text-lg">📧</span>
                     <p className="text-sm text-gray-400">
-                      {userProfile.emailId}
+                      {userProfile.email}
                     </p>
                   </div>
                   <div className="flex items-center space-x-3">

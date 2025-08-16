@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import mockUsers from "../jsons/mockUsers.json"; // Import mock data array
+import { addUser, fetchAllUsers } from "../supabaseApi";
 
 export default function SignUpModal({
   isOpen,
@@ -25,43 +25,56 @@ export default function SignUpModal({
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Check if user already exists
-    const exists = mockUsers.some(
-      (u) =>
-        (u.email &&
-          form.email &&
-          u.email.toLowerCase() === form.email.toLowerCase()) ||
-        (u.phone && form.phone && u.phone === form.phone)
-    );
+    try {
+      // First fetch all users
+      const existingUsers = await fetchAllUsers();
 
-    if (exists) {
-      toast.error("User already exists! Please sign in.");
+      const exists = existingUsers.some(
+        (u) =>
+          (u.email &&
+            form.email &&
+            u.email.toLowerCase() === form.email.toLowerCase()) ||
+          (u.phone && form.phone && u.phone === form.phone)
+      );
+
+      if (exists) {
+        toast.error("User already exists! Please sign in.");
+        onClose();
+        onSwitchToSignIn();
+        return;
+      }
+
+      // New user
+      const newUser = {
+        email: form.email,
+        phone: form.phone,
+        password_hash: form.password, // should hash in real apps
+        name: `${form.firstName} ${form.lastName}`,
+        theme: theme || "light",
+        loyalty_points: 0,
+        favorites: [],
+        order_history: [],
+      };
+
+      // Save to Supabase
+      const result = await addUser(newUser);
+
+      if (!result || result.length === 0) {
+        toast.error("Failed to create account. Please try again.");
+        return;
+      }
+
+      // Auto sign in
+      onSignUp(result[0]);
+      toast.success("Account created successfully! 🎉");
       onClose();
-      onSwitchToSignIn();
-      return;
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      toast.error("Something went wrong.");
     }
-
-    // Create new user object
-    const newUser = {
-      id: mockUsers.length + 1,
-      fullName: `${form.firstName} ${form.lastName}`,
-      occupation: form.occupation ,
-      email: form.email,
-      phone: form.phone,
-      password: form.password,
-      loyaltyPoints: 0,
-    };
-
-    // Simulate saving to "database"
-    mockUsers.push(newUser);
-
-    // Sign in immediately
-    onSignUp(newUser);
-    toast.success("Account created successfully! 🎉");
-    onClose();
   };
 
   return (

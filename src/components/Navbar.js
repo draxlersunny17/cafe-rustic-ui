@@ -17,9 +17,7 @@ export default function Navbar({
     return "Good Evening";
   };
 
-  const firstName = userProfile?.fullName
-    ? userProfile.fullName.split(" ")[0]
-    : "";
+  const firstName = userProfile?.name ? userProfile.name.split(" ")[0] : "";
 
   const menuItems = [
     { name: "Home", id: "home" },

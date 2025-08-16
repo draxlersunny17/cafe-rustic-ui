@@ -12,10 +12,10 @@ export default function Contact({ theme, userProfile }) {
   });
 
   useEffect(() => {
-    if (userProfile?.fullName || userProfile?.phone) {
+    if (userProfile?.name || userProfile?.phone) {
       setForm((f) => ({
         ...f,
-        name: userProfile.fullName || "",
+        name: userProfile.name || "",
         phone: userProfile.phone || "",
       }));
     }

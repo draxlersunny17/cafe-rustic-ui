@@ -21,7 +21,7 @@ import VariantSelector from "./components/VariantSelector";
 import SignInModal from "./components/SignInModal";
 import SignUpModal from "./components/SignUpModal";
 import ProfileModal from "./components/ProfileModal";
-import { fetchMenu } from "./fetchMenu";
+import { fetchMenu, fetchUserProfile, updateUserDetails } from "./supabaseApi";
 
 export default function CafeRustic() {
   const [variantItem, setVariantItem] = useState(null);
@@ -32,24 +32,12 @@ export default function CafeRustic() {
   const [profileOpen, setProfileOpen] = useState(false);
   const [signInOpen, setSignInOpen] = useState(false);
   const [signUpOpen, setSignUpOpen] = useState(false);
-  const [userProfile, setUserProfile] = useState(
-    () => JSON.parse(localStorage.getItem("userProfile")) || null
-  );
-  const [theme, setTheme] = useState(
-    () => localStorage.getItem("theme") || "light"
-  );
-  const [category, setCategory] = useState(
-    () => localStorage.getItem("category") || "All"
-  );
+  const [userProfile, setUserProfile] = useState(null);
+  const [theme, setTheme] = useState("light");
+  const [favorites, setFavorites] = useState([]);
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [category, setCategory] = useState("All");
   const [query, setQuery] = useState(() => localStorage.getItem("query") || "");
-  const [favorites, setFavorites] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("favorites")) || [];
-    } catch {
-      return [];
-    }
-  });
-  const [favPulse, setFavPulse] = useState(false);
   const [cart, setCart] = useState(() => {
     try {
       const raw = localStorage.getItem("cafe_cart_v2");
@@ -60,18 +48,9 @@ export default function CafeRustic() {
   });
   const [selectedItem, setSelectedItem] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
-  const [orderHistory, setOrderHistory] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem("orderHistory")) || [];
-    } catch {
-      return [];
-    }
-  });
+  const [orderHistory, setOrderHistory] = useState([]);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderNumber, setOrderNumber] = useState(null);
-  const [loyaltyPoints, setLoyaltyPoints] = useState(
-    () => parseInt(localStorage.getItem("loyaltyPoints")) || 0
-  );
   const [redeemPoints, setRedeemPoints] = useState(0);
 
   const formatINR = (n) => `₹${n}`;
@@ -99,27 +78,25 @@ export default function CafeRustic() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.remove("light", "dark");
-    document.documentElement.classList.add(theme);
-    localStorage.setItem("theme", theme);
-  }, [theme]);
-
-  useEffect(() => {
     localStorage.setItem("category", category);
     localStorage.setItem("query", query);
   }, [category, query]);
-  useEffect(() => {
-    localStorage.setItem("favorites", JSON.stringify(favorites));
-  }, [favorites]);
+
   useEffect(() => {
     localStorage.setItem("cafe_cart_v2", JSON.stringify(cart));
   }, [cart]);
+
   useEffect(() => {
-    localStorage.setItem("orderHistory", JSON.stringify(orderHistory));
-  }, [orderHistory]);
-  useEffect(() => {
-    localStorage.setItem("loyaltyPoints", loyaltyPoints);
-  }, [loyaltyPoints]);
+    const restoreUser = async () => {
+      const savedUserId = localStorage.getItem("userId");
+      if (savedUserId) {
+        await loadAndSetUserProfile(savedUserId);
+      }
+    };
+    restoreUser();
+  }, []); 
+
+
 
   // ----------- MEMOIZED VALUES -----------------
   const cartCount = useMemo(
@@ -155,18 +132,29 @@ export default function CafeRustic() {
   }, [menuItems, category, query, favorites]);
 
   // ----------- FUNCTIONS -----------------
-  const toggleTheme = () => setTheme((t) => (t === "light" ? "dark" : "light"));
+  const toggleTheme = async () => {
+    const newTheme = theme === "light" ? "dark" : "light";
+    setTheme(newTheme);
 
-  const toggleFavorite = (id) => {
-    setFavorites((prev) => {
-      const isFav = prev.includes(id);
-      const updated = isFav ? prev.filter((f) => f !== id) : [...prev, id];
-      if (!isFav) {
-        setFavPulse(true);
-        setTimeout(() => setFavPulse(false), 500);
-      }
-      return updated;
-    });
+    if (userProfile) {
+      await updateUserDetails(userProfile.id, { theme: newTheme });
+    }
+  };
+
+  const toggleFavorite = async (id) => {
+    if (!userProfile) {
+      toast.warning("Please sign in to use favorites!");
+      setSignInOpen(true);
+      return;
+    }
+
+    const updated = favorites.includes(id)
+      ? favorites.filter((f) => f !== id)
+      : [...favorites, id];
+
+    setFavorites(updated);
+
+    await updateUserDetails(userProfile.id, { favorites: updated });
   };
 
   const addToCart = (menuItem, qty = 1, variant = null) => {
@@ -218,28 +206,15 @@ export default function CafeRustic() {
 
   const clearCart = () => setCart([]);
 
-  const handleCheckout = () => {
+  const handleCheckout = async () => {
     if (cart.length === 0) return;
-
+  
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
     setOrderNumber(newOrderNumber);
-
-    // Calculate earned points BEFORE discount
+  
     const earnedPoints = Math.floor(totalPrice / 10);
-
-    // Calculate discount using redeemed points
     const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice);
-
-    // Update loyalty points: remove redeemed, add earned
-    setLoyaltyPoints((prev) => prev - discount + earnedPoints);
-
-    // Reset redeem input
-    setRedeemPoints(0);
-
-    // Let the user know how many points they earned
-    toast.success(`You earned ${earnedPoints} points!`);
-
-    // Save order history with discount applied
+  
     const newOrder = {
       orderNumber: newOrderNumber,
       date: new Date().toLocaleString(),
@@ -249,13 +224,30 @@ export default function CafeRustic() {
       total: totalPrice - discount,
       earnedPoints,
     };
-    setOrderHistory((prev) => [newOrder, ...prev]);
-
-    // Clear cart and show progress modal
+  
+    // Update state
+    const updatedHistory = [newOrder, ...orderHistory];
+    setOrderHistory(updatedHistory);
+  
+    // ✅ Save to Supabase
+    if (userProfile?.id) {
+      await updateUserDetails(userProfile.id, {
+        order_history: updatedHistory,
+        loyalty_points: loyaltyPoints - discount + earnedPoints,
+      });
+    }
+  
+    // Update loyalty points in state
+    setLoyaltyPoints((prev) => prev - discount + earnedPoints);
+    setRedeemPoints(0);
+  
+    toast.success(`You earned ${earnedPoints} points!`);
+  
     clearCart();
     setOrderModalOpen(true);
     setCartOpen(false);
   };
+  
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -386,28 +378,43 @@ export default function CafeRustic() {
     toast.success(`Order #${order.orderNumber} added to cart!`);
   };
 
-  const handleSignIn = (profileData, isSignUp = false) => {
+  const loadAndSetUserProfile = async (userId) => {
+    const fullProfile = await fetchUserProfile(userId);
+    if (fullProfile) {
+      setUserProfile(fullProfile);
+      setTheme(fullProfile.theme || "light");
+      setFavorites(fullProfile.favorites || []);
+      setLoyaltyPoints(fullProfile.loyalty_points || 0);
+      setOrderHistory(fullProfile.order_history || []);
+    }
+  }; 
+  
+  const handleSignIn = async (profileData, isSignUp = false) => {
     setUserProfile(profileData);
-    localStorage.setItem("userProfile", JSON.stringify(profileData));
-
+    localStorage.setItem("userId", profileData.id);
+    await loadAndSetUserProfile(profileData.id);
     // If this is from SignUp — clear history & points
     if (isSignUp) {
       setOrderHistory([]);
       setLoyaltyPoints(0);
-      localStorage.removeItem("orderHistory");
-      localStorage.setItem("loyaltyPoints", "0");
+      setCart([]);
       localStorage.removeItem("cafe_cart_v2");
     }
-
     setSignInOpen(false);
     setSignUpOpen(false);
   };
 
   const handleLogout = () => {
     setUserProfile(null);
-    localStorage.removeItem("userProfile");
+    localStorage.removeItem("userId");   // clear saved session
     setProfileOpen(false);
+    setFavorites([]);                    // clear local state
+    setTheme("light");                   // reset theme locally
+    setOrderHistory([]);                 // clear order history state
+    setLoyaltyPoints(0);                 // reset points
+    setCart([]);                         // empty cart
   };
+  
 
   return (
     <>
@@ -529,8 +536,6 @@ export default function CafeRustic() {
         <FloatingButtons
           cartCount={cartCount}
           favorites={favorites}
-          favPulse={favPulse}
-          setCategory={setCategory}
         />
 
         <CartPanel

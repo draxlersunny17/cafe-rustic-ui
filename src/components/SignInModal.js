@@ -1,9 +1,6 @@
 import React, { useState } from "react";
-import mockUsersData from "../jsons/mockUsers.json";
 import { toast } from "react-toastify";
-
-// Mock JSON (this would ideally come from a backend or local file)
-const mockUsers = mockUsersData;
+import { fetchUserByEmail, fetchUserByPhone } from "../supabaseApi";
 
 export default function SignInModal({
   isOpen,
@@ -23,30 +20,24 @@ export default function SignInModal({
   if (!isOpen) return null;
   const isDark = theme === "dark";
 
-  const handleEmailLogin = (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
+    const { user, error } = await fetchUserByEmail(email, password);
 
-    // Find user by email first
-    const user = mockUsers.find((u) => u.emailId === email);
-
-    if (!user) {
-      // Email not found
-      toast.error("User not found! Please sign up.");
+    if (error) {
+      toast.error(error);
       onClose();
       onSwitchToSignUp();
-    } else if (user.password !== password) {
-      // Email exists but password is wrong
-      toast.error("Wrong password! Please try again.");
     } else {
-      // Correct email and password
       onSignIn(user);
       onClose();
     }
   };
 
-  const handleSendOtp = () => {
-    const user = mockUsers.find((u) => u.phone === phone);
-    if (!user) {
+  const handleSendOtp = async () => {
+    const { user, error } = await fetchUserByPhone(phone);
+
+    if (!user || error) {
       toast.error("Phone number not registered. Please sign up.");
       onClose();
       onSwitchToSignUp();
@@ -54,23 +45,29 @@ export default function SignInModal({
     }
 
     // Generate random 4-digit OTP
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000); // 1000-9999
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000); // 1000–9999
     setOtpRecieved(generatedOtp.toString()); // store as string for comparison
     setOtpSent(true);
 
     toast.success(`Dummy OTP: ${generatedOtp}`);
   };
 
-  const handlePhoneLogin = (e) => {
+  // Verify OTP and log in
+  const handlePhoneLogin = async (e) => {
     e.preventDefault();
-    const user = mockUsers.find((u) => u.phone === phone);
 
-    if (user && otp === otpRecieved) {
-      // compare with stored OTP
-      onSignIn(user);
+    const { user, error } = await fetchUserByPhone(phone);
+
+    if (error) {
+      toast.error(error);
+      return;
+    }
+
+    if (otp === otpRecieved) {
+      onSignIn(user); // store user in local state & localStorage
       onClose();
     } else {
-      toast.error("Invalid OTP or user not found.");
+      toast.error("Invalid OTP. Please try again.");
     }
   };
 
@@ -173,7 +170,7 @@ export default function SignInModal({
 
         {/* Phone login form */}
         {loginMethod === "phone" && (
-          <form onSubmit={handlePhoneLogin} className="space-y-4">
+          <div className="space-y-4">
             <input
               type="tel"
               placeholder="Phone Number"
@@ -207,7 +204,7 @@ export default function SignInModal({
                 Send OTP
               </button>
             ) : (
-              <>
+              <form onSubmit={handlePhoneLogin} className="space-y-4">
                 <input
                   type="text"
                   placeholder="Enter OTP"
@@ -239,9 +236,9 @@ export default function SignInModal({
                     Verify & Sign In
                   </button>
                 </div>
-              </>
+              </form>
             )}
-          </form>
+          </div>
         )}
       </div>
     </div>
