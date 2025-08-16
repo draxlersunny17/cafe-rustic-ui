@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiRepeat } from "react-icons/fi";
+import {formatDateTime} from "../utils/common.js"
 
 export default function OrderHistory({
   orderHistory,
@@ -37,7 +38,7 @@ export default function OrderHistory({
           >
             {orders.map((order) => (
               <motion.li
-                key={order.orderNumber}
+                key={order.order_number}
                 variants={cardVariants}
                 className={`p-4 rounded-lg border shadow-sm flex flex-col justify-between transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
                   isDark
@@ -48,13 +49,13 @@ export default function OrderHistory({
                 {/* Order Info */}
                 <div>
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-bold">#{order.orderNumber}</span>
+                    <span className="font-bold">#{order.order_number}</span>
                     <span
                       className={`text-xs ${
                         isDark ? "text-gray-400" : "text-gray-500"
                       }`}
                     >
-                      {order.date}
+                      {formatDateTime(order.date)}
                     </span>
                   </div>
                   <div

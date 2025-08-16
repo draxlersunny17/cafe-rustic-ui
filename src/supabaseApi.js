@@ -197,3 +197,48 @@ export async function updateUserDetails(userId, updates) {
     return null;
   }
 }
+
+export async function addOrder(order) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation", // return inserted row
+      },
+      body: JSON.stringify(order),
+    });
+
+    if (!response.ok) throw new Error("Failed to insert order");
+
+    const data = await response.json();
+    return data[0]; // inserted order
+  } catch (error) {
+    console.error("Error adding order:", error);
+    return null;
+  }
+}
+
+export async function fetchOrders(userId) {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}&select=*`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch orders");
+    const data = await response.json();
+    return data.sort((a, b) => new Date(b.date) - new Date(a.date));
+  } catch (err) {
+    console.error("Error fetching orders:", err);
+    return [];
+  }
+}
+

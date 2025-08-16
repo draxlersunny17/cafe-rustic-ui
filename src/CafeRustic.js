@@ -21,7 +21,7 @@ import VariantSelector from "./components/VariantSelector";
 import SignInModal from "./components/SignInModal";
 import SignUpModal from "./components/SignUpModal";
 import ProfileModal from "./components/ProfileModal";
-import { fetchMenu, fetchUserProfile, updateUserDetails } from "./supabaseApi";
+import { fetchMenu, fetchUserProfile, updateUserDetails , addOrder, fetchOrders} from "./supabaseApi";
 
 export default function CafeRustic() {
   const [variantItem, setVariantItem] = useState(null);
@@ -185,6 +185,7 @@ export default function CafeRustic() {
         },
       ];
     });
+    setProfileOpen(false);
     setCartOpen(true);
   };
 
@@ -216,30 +217,29 @@ export default function CafeRustic() {
     const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice);
   
     const newOrder = {
-      orderNumber: newOrderNumber,
-      date: new Date().toLocaleString(),
+      user_id: userProfile.id,
+      order_number: newOrderNumber,
+      date: new Date().toISOString(),
       items: cart,
       subtotal: totalPrice,
       discount,
       total: totalPrice - discount,
-      earnedPoints,
+      earned_points: earnedPoints,
     };
   
-    // Update state
-    const updatedHistory = [newOrder, ...orderHistory];
-    setOrderHistory(updatedHistory);
+    // ✅ Insert into orders table
+    await addOrder(newOrder);
   
-    // ✅ Save to Supabase
-    if (userProfile?.id) {
-      await updateUserDetails(userProfile.id, {
-        order_history: updatedHistory,
-        loyalty_points: loyaltyPoints - discount + earnedPoints,
-      });
-    }
-  
-    // Update loyalty points in state
+    // ✅ Update loyalty points
+    await updateUserDetails(userProfile.id, {
+      loyalty_points: loyaltyPoints - discount + earnedPoints,
+    });
     setLoyaltyPoints((prev) => prev - discount + earnedPoints);
     setRedeemPoints(0);
+  
+    // ✅ Reload order history from orders table
+    const updatedOrders = await fetchOrders(userProfile.id);
+    setOrderHistory(updatedOrders);
   
     toast.success(`You earned ${earnedPoints} points!`);
   
@@ -375,7 +375,7 @@ export default function CafeRustic() {
       }
     });
 
-    toast.success(`Order #${order.orderNumber} added to cart!`);
+    toast.success(`Order #${order.order_number} added to cart!`);
   };
 
   const loadAndSetUserProfile = async (userId) => {
@@ -385,8 +385,8 @@ export default function CafeRustic() {
       setTheme(fullProfile.theme || "light");
       setFavorites(fullProfile.favorites || []);
       setLoyaltyPoints(fullProfile.loyalty_points || 0);
-      setOrderHistory(fullProfile.order_history || []);
-    }
+      const orders = await fetchOrders(userId);
+      setOrderHistory(orders);    }
   }; 
   
   const handleSignIn = async (profileData, isSignUp = false) => {
