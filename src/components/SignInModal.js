@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import { fetchUserByEmail, fetchUserByPhone } from "../supabaseApi";
 
@@ -16,27 +16,45 @@ export default function SignInModal({
   const [otp, setOtp] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otpRecieved, setOtpRecieved] = useState("");
+  const [otpTimer, setOtpTimer] = useState(0);
 
-  if (!isOpen) return null;
-  const isDark = theme === "dark";
+  useEffect(() => {
+    let interval;
+    if (otpTimer > 0) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [otpTimer]);
 
   const handleEmailLogin = async (e) => {
     e.preventDefault();
-    const { user, error } = await fetchUserByEmail(email, password);
-
+    const { user, exists, validPassword, error } = await fetchUserByEmail(
+      email,
+      password
+    );
     if (error) {
       toast.error(error);
+      return;
+    }
+    if (!exists) {
+      toast.error("No account found with this email. Please sign up.");
       onClose();
       onSwitchToSignUp();
+    } else if (!validPassword) {
+      toast.error("Incorrect password. Please try again.");
     } else {
       onSignIn(user);
       onClose();
     }
   };
 
+  if (!isOpen) return null;
+  const isDark = theme === "dark";
+
   const handleSendOtp = async () => {
     const { user, error } = await fetchUserByPhone(phone);
-
     if (!user || error) {
       toast.error("Phone number not registered. Please sign up.");
       onClose();
@@ -45,10 +63,11 @@ export default function SignInModal({
     }
 
     // Generate random 4-digit OTP
-    const generatedOtp = Math.floor(1000 + Math.random() * 9000); // 1000–9999
-    setOtpRecieved(generatedOtp.toString()); // store as string for comparison
+    const generatedOtp = Math.floor(1000 + Math.random() * 9000);
+    setOtpRecieved(generatedOtp.toString());
+    setOtp("");
     setOtpSent(true);
-
+    setOtpTimer(15); // disable button for 15 sec
     toast.success(`Dummy OTP: ${generatedOtp}`);
   };
 
@@ -56,8 +75,13 @@ export default function SignInModal({
   const handlePhoneLogin = async (e) => {
     e.preventDefault();
 
-    const { user, error } = await fetchUserByPhone(phone);
+    if (otpTimer === 0) {
+      toast.error("OTP expired. Please resend.");
+      setOtp(""); // show Resend again
+      return;
+    }
 
+    const { user, error } = await fetchUserByPhone(phone);
     if (error) {
       toast.error(error);
       return;
@@ -68,6 +92,12 @@ export default function SignInModal({
       onClose();
     } else {
       toast.error("Invalid OTP. Please try again.");
+      const newOtp = Math.floor(1000 + Math.random() * 9000).toString();
+      setOtpRecieved(newOtp);
+
+      setOtp("");
+      setOtpTimer(15);
+      toast.success(`Dummy OTP: ${newOtp}`);
     }
   };
 
@@ -183,6 +213,7 @@ export default function SignInModal({
                   : "bg-gray-100 border-gray-300"
               }`}
             />
+
             <div className="flex justify-between items-center">
               <span
                 className="text-sm text-blue-500 hover:underline cursor-pointer"
@@ -195,21 +226,18 @@ export default function SignInModal({
               </span>
             </div>
 
-            {!otpSent ? (
-              <button
-                type="button"
-                onClick={handleSendOtp}
-                className="bg-amber-400 hover:bg-amber-500 px-4 py-2 rounded-lg font-semibold text-gray-900 w-full"
-              >
-                Send OTP
-              </button>
-            ) : (
+            {otpSent && (
               <form onSubmit={handlePhoneLogin} className="space-y-4">
                 <input
                   type="text"
                   placeholder="Enter OTP"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) =>
+                    setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))
+                  }
+                  inputMode="numeric"
+                  pattern="\d*"
+                  maxLength={4}
                   required
                   className={`w-full px-4 py-2 rounded-lg border ${
                     isDark
@@ -217,26 +245,54 @@ export default function SignInModal({
                       : "bg-gray-100 border-gray-300"
                   }`}
                 />
-                <div className="flex justify-end gap-3 mt-3">
+
+                {/* If exactly 4 digits AND not expired -> show Verify; else show Resend */}
+                {otp.length === 4 && otpTimer > 0 ? (
+                  <div className="flex justify-end gap-3 mt-3">
+                    <button
+                      type="button"
+                      onClick={onClose}
+                      className={
+                        isDark
+                          ? "bg-gray-700 px-4 py-2 rounded-lg"
+                          : "bg-gray-200 px-4 py-2 rounded-lg"
+                      }
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="bg-amber-400 hover:bg-amber-500 px-4 py-2 rounded-lg font-semibold text-gray-900"
+                    >
+                      Verify & Sign In
+                    </button>
+                  </div>
+                ) : (
                   <button
                     type="button"
-                    onClick={onClose}
-                    className={
-                      isDark
-                        ? "bg-gray-700 px-4 py-2 rounded-lg"
-                        : "bg-gray-200 px-4 py-2 rounded-lg"
-                    }
+                    onClick={handleSendOtp}
+                    disabled={otpTimer > 0}
+                    className={`w-full px-4 py-2 rounded-lg font-semibold text-gray-900 ${
+                      otpTimer > 0
+                        ? "bg-gray-300 cursor-not-allowed"
+                        : "bg-amber-400 hover:bg-amber-500"
+                    }`}
                   >
-                    Cancel
+                    {otpTimer > 0 ? `Resend OTP (${otpTimer})` : "Resend OTP"}
                   </button>
-                  <button
-                    type="submit"
-                    className="bg-amber-400 hover:bg-amber-500 px-4 py-2 rounded-lg font-semibold text-gray-900"
-                  >
-                    Verify & Sign In
-                  </button>
-                </div>
+                )}
               </form>
+            )}
+
+            {/* Initial Send OTP button (before OTP is sent) */}
+            {!otpSent && (
+              <button
+                type="button"
+                onClick={handleSendOtp}
+                className="w-full px-4 py-2 rounded-lg font-semibold text-gray-900 bg-amber-400 hover:bg-amber-500"
+              >
+                Send OTP
+              </button>
             )}
           </div>
         )}

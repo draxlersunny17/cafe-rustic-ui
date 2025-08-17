@@ -51,19 +51,25 @@ export async function fetchUserByEmail(email, password) {
     const users = await response.json();
 
     if (users.length === 0) {
-      return { error: "User not found" };
+      return { user: null, exists: false, validPassword: false };
     }
 
     const user = users[0];
+    const validPassword = user.password_hash === password;
 
-    if (user.password_hash !== password) {
-      return { error: "Wrong password" };
-    }
-
-    return { user };
+    return {
+      user: validPassword ? user : null,
+      exists: true,
+      validPassword,
+    };
   } catch (error) {
     console.error("Error fetching user by email:", error);
-    return { error: "Something went wrong" };
+    return {
+      user: null,
+      exists: false,
+      validPassword: false,
+      error: "Something went wrong",
+    };
   }
 }
 
@@ -241,4 +247,3 @@ export async function fetchOrders(userId) {
     return [];
   }
 }
-

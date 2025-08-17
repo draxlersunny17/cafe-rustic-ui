@@ -413,6 +413,7 @@ export default function CafeRustic() {
     setOrderHistory([]);                 // clear order history state
     setLoyaltyPoints(0);                 // reset points
     setCart([]);                         // empty cart
+    window.location.reload();
   };
   
 

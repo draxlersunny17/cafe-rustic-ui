@@ -15,7 +15,7 @@ export default function SignUpModal({
     email: "",
     phone: "",
     password: "",
-    occupation: "",
+    dob: "",
   });
 
   if (!isOpen) return null;
@@ -53,10 +53,10 @@ export default function SignUpModal({
         phone: form.phone,
         password_hash: form.password, // should hash in real apps
         name: `${form.firstName} ${form.lastName}`,
+        dob: form.dob,
         theme: theme || "light",
         loyalty_points: 0,
         favorites: [],
-        order_history: [],
       };
 
       // Save to Supabase
@@ -151,10 +151,11 @@ export default function SignUpModal({
             }`}
           />
           <input
-            name="occupation"
-            placeholder="Occupation"
-            value={form.occupation}
+            type="date"
+            name="dob"
+            value={form.dob}
             onChange={handleChange}
+            required
             className={`w-full px-4 py-2 rounded-lg border ${
               isDark
                 ? "bg-gray-800 border-gray-700"
