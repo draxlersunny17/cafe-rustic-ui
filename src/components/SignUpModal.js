@@ -129,8 +129,14 @@ export default function SignUpModal({
             name="phone"
             placeholder="Phone Number"
             value={form.phone}
-            onChange={handleChange}
+            onChange={(e) => {
+              // allow only digits and max 10 characters
+              const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+              setForm({ ...form, phone: value });
+            }}
             required
+            pattern="[6-9][0-9]{9}" // regex for Indian numbers
+            title="Enter a valid 10-digit phone number"
             className={`w-full px-4 py-2 rounded-lg border ${
               isDark
                 ? "bg-gray-800 border-gray-700"

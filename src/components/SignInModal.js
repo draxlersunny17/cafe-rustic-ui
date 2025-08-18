@@ -54,6 +54,10 @@ export default function SignInModal({
   const isDark = theme === "dark";
 
   const handleSendOtp = async () => {
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      toast.error("Enter a valid 10-digit phone number.");
+      return;
+    }
     const { user, error } = await fetchUserByPhone(phone);
     if (!user || error) {
       toast.error("Phone number not registered. Please sign up.");
@@ -205,8 +209,12 @@ export default function SignInModal({
               type="tel"
               placeholder="Phone Number"
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value.replace(/\D/g, "").slice(0, 10);
+                setPhone(value);
+              }}
               required
+              pattern="[6-9][0-9]{9}"
               className={`w-full px-4 py-2 rounded-lg border ${
                 isDark
                   ? "bg-gray-800 border-gray-700"

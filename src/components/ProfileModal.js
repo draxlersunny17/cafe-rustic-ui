@@ -1,5 +1,6 @@
 // components/ProfilePanel.jsx
 import React from "react";
+import { Mail, Phone, Cake, User } from "lucide-react";
 
 export default function ProfilePanel({
   open,
@@ -81,31 +82,59 @@ export default function ProfilePanel({
               <>
                 {/* Profile Info with Tier Badge */}
                 <div
-                  className={`p-4 rounded-lg shadow-md ${
-                    theme === "dark" ? "bg-gray-800" : "bg-gray-50"
-                  } space-y-3`}
+                  className={`p-5 rounded-2xl shadow-lg border ${
+                    theme === "dark"
+                      ? "bg-gray-800 border-gray-700"
+                      : "bg-gray-50 border-gray-200"
+                  } space-y-4`}
                 >
-                  <div className="flex items-center space-x-3">
-                    <span className="text-amber-500 text-xl">👤</span>
-                    <p className="font-semibold text-lg flex items-center">
-                      {userProfile.name}
+                  {/* Avatar + Name + Tier */}
+                  <div className="flex items-center space-x-4">
+                    {/* Avatar Circle (initials fallback) */}
+                    <div
+                      className={`w-12 h-12 flex items-center justify-center rounded-full ${
+                        theme === "dark"
+                          ? "bg-gray-700 text-gray-200"
+                          : "bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      <User className="w-6 h-6" />
+                    </div>
+
+                    <div className="flex flex-col">
+                      <p className="font-semibold text-xl">
+                        {userProfile.name}
+                      </p>
                       <span
-                        className={`ml-2 px-2 py-1 rounded text-white text-xs ${currentTier.color}`}
+                        className={`inline-flex items-center px-2 py-0.5 mt-1 rounded-full text-xs font-medium text-white shadow-md ${currentTier.color}`}
                       >
-                        {currentTier.name}
+                        ⭐ {currentTier.name} Member
                       </span>
-                    </p>
+                    </div>
                   </div>
 
-                  <div className="flex items-center space-x-3">
-                    <span className="text-blue-500 text-lg">📧</span>
-                    <p className="text-sm text-gray-400">
-                      {userProfile.email}
-                    </p>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <span className="text-green-500 text-lg">📞</span>
-                    <p className="text-sm text-gray-400">{userProfile.phone}</p>
+                  {/* Details */}
+                  <div className="space-y-2 text-sm">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="text-blue-500 w-5 h-5" />
+                      <p className="text-gray-400">{userProfile.email}</p>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Phone className="text-green-500 w-5 h-5" />
+                      <p className="text-gray-400">{userProfile.phone}</p>
+                    </div>
+
+                    <div className="flex items-center space-x-3">
+                      <Cake className="text-pink-500 w-5 h-5" />
+                      <p className="text-gray-400">
+                        {new Date(userProfile.dob).toLocaleDateString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
