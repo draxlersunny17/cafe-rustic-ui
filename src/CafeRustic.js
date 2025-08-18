@@ -480,7 +480,7 @@ export default function CafeRustic() {
         <Hero />
         <About />
 
-        <SpecialOffersCarousel theme={theme} />
+        <SpecialOffersCarousel theme={theme} userProfile={userProfile} />
 
         {loading ? (
           <div className="flex justify-center items-center py-20">

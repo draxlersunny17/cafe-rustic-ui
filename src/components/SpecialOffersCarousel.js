@@ -1,7 +1,7 @@
 import React from "react";
 import Slider from "react-slick";
 
-export default function SpecialOffersCarousel({ theme }) {
+export default function SpecialOffersCarousel({ theme, userProfile }) {
   const offers = [
     {
       id: 1,
@@ -18,14 +18,14 @@ export default function SpecialOffersCarousel({ theme }) {
     {
       id: 3,
       title: "Free Dessert",
-      description: "With any dinner meal ordered this Friday.",
+      description: "With any lunch meal ordered this Friday.",
       img: "https://t3.ftcdn.net/jpg/00/96/19/86/360_F_96198695_oyJg0I7ELpXI6608FI942PX9LlRRyEnd.jpg",
     },
     {
       id: 4,
-      title: "Half-Price Smoothies",
-      description: "All smoothies are 50% off every Monday.",
-      img: "https://i.ytimg.com/vi/CJN1n3fId_A/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLDokmhsZIOM9mVq85gtY6Wvh2QsoAß",
+      title: "Monday Sweet Deal",
+      description: "Sweeten your day with 10% off every Monday.",
+      img: "https://i.ytimg.com/vi/3Am4DfPB2Dk/hq720.jpg?sqp=-oaymwEhCK4FEIIDSFryq4qpAxMIARUAAAAAGAElAADIQj0AgKJD&rs=AOn4CLBn26Of7hnISSlv1VieCYncAXEeAg",
     },
     {
       id: 5,
@@ -44,9 +44,8 @@ export default function SpecialOffersCarousel({ theme }) {
       title: "Weekend Happy Hour",
       description: "50% off select beverages from 4 PM to 6 PM.",
       img: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800",
-    }
+    },
   ];
-  
 
   const settings = {
     dots: true,
@@ -61,6 +60,25 @@ export default function SpecialOffersCarousel({ theme }) {
     slidesToScroll: 1,
     arrows: false,
   };
+
+  const today = new Date();
+  const isBirthday =
+    userProfile?.dob &&
+    new Date(userProfile.dob).getDate() === today.getDate() &&
+    new Date(userProfile.dob).getMonth() === today.getMonth();
+
+  const birthdayOffer = isBirthday
+    ? [
+        {
+          id: "birthday",
+          title: "🎂 Happy Birthday Special!",
+          description: "Enjoy a free cake slice & coffee on us today!",
+          img: "/images/birthdaybanner.png",
+        },
+      ]
+    : [];
+
+  const allOffers = [...birthdayOffer, ...offers];
 
   // Determine theme styles
   const isDark = theme === "dark";
@@ -77,7 +95,7 @@ export default function SpecialOffersCarousel({ theme }) {
           Special Offers & Discounts
         </h2>
         <Slider {...settings}>
-          {offers.map((offer) => (
+          {allOffers.map((offer) => (
             <div key={offer.id} className="p-4">
               <div className="relative rounded-lg overflow-hidden shadow-lg group">
                 <img

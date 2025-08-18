@@ -1,6 +1,5 @@
-// components/ProfilePanel.jsx
 import React from "react";
-import { Mail, Phone, Cake, User } from "lucide-react";
+import { Mail, Phone, Cake, User, Gift } from "lucide-react";
 
 export default function ProfilePanel({
   open,
@@ -20,6 +19,9 @@ export default function ProfilePanel({
     { name: "Diamond", minPoints: 5000, color: "bg-cyan-400" },
     { name: "Platinum", minPoints: 10000, color: "bg-purple-600" },
   ];
+
+  const firstName = userProfile?.name ? userProfile.name.split(" ")[0] : "";
+
 
   // Determine current tier
   const currentTier =
@@ -42,6 +44,17 @@ export default function ProfilePanel({
         100
       )
     : 100; // Maxed out
+
+  // 🎂 Birthday check
+  const isBirthday = (() => {
+    if (!userProfile?.dob) return false;
+    const today = new Date();
+    const dob = new Date(userProfile.dob);
+    return (
+      today.getDate() === dob.getDate() &&
+      today.getMonth() === dob.getMonth()
+    );
+  })();
 
   return (
     <div
@@ -90,7 +103,7 @@ export default function ProfilePanel({
                 >
                   {/* Avatar + Name + Tier */}
                   <div className="flex items-center space-x-4">
-                    {/* Avatar Circle (initials fallback) */}
+                    {/* Avatar Circle */}
                     <div
                       className={`w-12 h-12 flex items-center justify-center rounded-full ${
                         theme === "dark"
@@ -138,8 +151,24 @@ export default function ProfilePanel({
                   </div>
                 </div>
 
-                {/* Loyalty Progress */}
+                {/* 🎂 Birthday Reward */}
+                {isBirthday && (
+                  <div
+                    className={`p-4 rounded-lg flex items-center space-x-3 font-semibold shadow ${
+                      theme === "dark"
+                        ? "bg-pink-900 text-pink-200"
+                        : "bg-pink-100 text-pink-800"
+                    }`}
+                  >
+                    <Gift className="w-6 h-6 text-pink-500" />
+                    <p>
+                      Happy Birthday, {firstName}! 🎉  
+                      Enjoy a free coffee on us today ☕
+                    </p>
+                  </div>
+                )}
 
+                {/* Loyalty Progress */}
                 <div
                   className={`p-4 rounded-lg ${
                     theme === "dark"
