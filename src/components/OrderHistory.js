@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiRepeat, FiChevronDown } from "react-icons/fi";
-import { QRCodeCanvas } from "qrcode.react";
 import QRCode from "qrcode";
 import { formatDateTime } from "../utils/common.js";
 import jsPDF from "jspdf";
@@ -486,36 +485,7 @@ export default function OrderHistory({
                   <span>{formatINR(selectedOrder.total)}</span>
                 </div>
 
-                {/* QR Code */}
-                <div
-                  className={`mt-6 p-4 rounded-xl flex flex-col items-center shadow-inner transition
-    ${theme === "dark" ? "bg-gray-800 text-white" : "bg-gray-100 text-black"}`}
-                >
-                  <p
-                    className={`text-sm mb-2 ${
-                      isDark ? "text-gray-400" : "text-gray-600"
-                    }`}
-                  >
-                    Scan to Save Receipt
-                  </p>
-                  <QRCodeCanvas
-                    value={JSON.stringify({
-                      order_number: selectedOrder.order_number,
-                      items: selectedOrder.items,
-                      subtotal: selectedOrder.subtotal,
-                      discount: selectedOrder.discount,
-                      sgst: selectedOrder.sgst || 0,
-                      cgst: selectedOrder.cgst || 0,
-                      total: selectedOrder.total,
-                      date: selectedOrder.date,
-                    })}
-                    size={140}
-                    bgColor={isDark ? "#111827" : "#ffffff"}
-                    fgColor={isDark ? "#f9fafb" : "#000000"}
-                    level="H"
-                    includeMargin={true}
-                  />
-                </div>
+               
               </div>
 
               {/* --- Footer --- */}
