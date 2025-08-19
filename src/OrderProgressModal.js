@@ -6,8 +6,6 @@ import { launchConfetti } from "./utils/confetti";
 const defaultImage = "https://cdn-icons-png.flaticon.com/512/992/992700.png"; // fallback
 const timerIcon =
   "https://media.lordicon.com/icons/wired/lineal/46-timer-stopwatch.svg";
-const paymentConfirmedImage =
-  "https://www.kablooe.com/wp-content/uploads/2019/08/check_mark.png";
 const readyImage =
   "https://img.freepik.com/free-psd/3d-rendering-hotel-icon_23-2150102372.jpg?semt=ais_hybrid&w=740&q=80";
 const foodReadyImage =
@@ -15,14 +13,13 @@ const foodReadyImage =
 
 const STEPS = [
   { title: "Order Placed", img: timerIcon },
-  { title: "Payment Confirmed", img: paymentConfirmedImage },
   { title: "In Preparation", img: null },
   { title: "Ready to Serve", img: readyImage },
 ];
 
 // Step durations in ms
-const stepDurations = [30000, 20000, 120000]; // Step 1: 30s, Step 2: 20s, Step 3: 2m
-const totalTime = stepDurations.reduce((a, b) => a + b, 0); // total process time
+const stepDurations = [30000, 120000]; // Step 1: 30s, Step 2: 2m
+const totalTime = stepDurations.reduce((a, b) => a + b, 0);
 
 export default function OrderProgressModal({ isOpen, onClose, theme }) {
   const [step, setStep] = useState(0);
@@ -65,7 +62,7 @@ export default function OrderProgressModal({ isOpen, onClose, theme }) {
         return;
       }
     }
-    // Final step
+// Final step
     setStep(STEPS.length - 1);
   }, [totalCountdown, isOpen]);
 
@@ -126,24 +123,12 @@ export default function OrderProgressModal({ isOpen, onClose, theme }) {
               )}
             </h2>
 
-             {/* Cancel Order button */}
-            {/* {step < 2 && (
-              <div className="mb-4 text-center">
-                <button
-                  onClick={handleCancel}
-                  className="px-6 py-2 rounded-full font-semibold bg-red-500 hover:bg-red-600 text-white shadow-md transition-colors duration-300"
-                >
-                  Cancel Order
-                </button>
-              </div>
-            )} */}
-
             {/* Progress Bar */}
             <div className="flex items-center mb-8">
               {STEPS.map((s, idx) => {
                 const isActive = idx === step;
                 const isCompleted =
-                  idx < step || (s.title === "Ready to Serve" && step >= 3);
+                  idx < step || (s.title === "Ready to Serve" && step >= 2);
 
                 return (
                   <React.Fragment key={s.title}>
@@ -170,8 +155,7 @@ export default function OrderProgressModal({ isOpen, onClose, theme }) {
                         className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-gray-300"
                       >
                         {isActive ? (
-                          s.title === "Order Placed" ||
-                          s.title === "Payment Confirmed" ? (
+                          s.title === "Order Placed" ? (
                             <Spinner />
                           ) : s.title === "In Preparation" && !paused ? (
                             <motion.div
@@ -244,7 +228,7 @@ export default function OrderProgressModal({ isOpen, onClose, theme }) {
                         animate={{
                           background: idx < step ? "#ffffff" : "#f3f4f6",
                         }}
-                        className="flex-1 h-1 rounded-full mx-3 mt-6"
+                        className="flex-1 h-1 rounded-full mx-3 -mt-6"
                       />
                     )}
                   </React.Fragment>
@@ -253,7 +237,7 @@ export default function OrderProgressModal({ isOpen, onClose, theme }) {
             </div>
 
             {/* Pause/Resume for In Preparation */}
-            {step === 2 && (
+            {step === 1 && (
               <div className="text-center mb-4">
                 <button
                   onClick={() => setPaused(!paused)}
