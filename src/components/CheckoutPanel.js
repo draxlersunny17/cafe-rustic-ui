@@ -60,7 +60,7 @@ export default function CheckoutPanel({
       // Step 3: Reset + callback (optional after 2-3s)
       setTimeout(() => {
         setSuccess(false);
-        onConfirm({ paymentMethod, tip: appliedTip, splitCount });
+        onConfirm({ paymentMethod, tip: appliedTip, splitCount, totalWithGST: grandTotal });
       }, 2000);
   
     }, 10000); // 10s wait before success
