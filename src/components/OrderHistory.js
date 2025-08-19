@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiRepeat, FiChevronDown } from "react-icons/fi";
 import { QRCodeCanvas } from "qrcode.react";
+import QRCode from "qrcode";
 import { formatDateTime } from "../utils/common.js";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export default function OrderHistory({
   orderHistory,
@@ -37,6 +40,141 @@ export default function OrderHistory({
   const openReceipt = (order) => {
     setSelectedOrder(order);
     setShowReceipt(true);
+  };
+
+  const generateReceiptPDF = async () => {
+    const doc = new jsPDF();
+
+    // ===== Logo =====
+    const logo = "/images/cafelogo.png";
+
+    // (x=15, y=5, width=25, height=25)
+    doc.addImage(logo, "PNG", 15, 5, 25, 25);
+
+    // ===== Header =====
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("Café Rustic", 105, 15, { align: "center" });
+
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text("123 Street, City • +91-9876543210", 105, 22, { align: "center" });
+    doc.text("Thank you for dining with us!", 105, 28, { align: "center" });
+
+    // Divider
+    doc.line(10, 32, 200, 32);
+
+    // ===== Order Info =====
+    doc.setFontSize(12);
+    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 40);
+    doc.text(
+      `Payment Type: ${selectedOrder.payment_method.toUpperCase()}`,
+      14,
+      47
+    );
+
+    // ===== Table =====
+    const tableData = selectedOrder.items.map((item) => [
+      item.name,
+      item.qty,
+      `Rs.${item.price.toFixed(2)}`,
+      `Rs.${(item.price * item.qty).toFixed(2)}`,
+    ]);
+
+    autoTable(doc, {
+      head: [["Item", "Qty", "Price", "Total"]],
+      body: tableData,
+      startY: 55,
+      theme: "striped",
+      styles: { fontSize: 11 },
+      headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+    });
+
+    // ===== Totals Section =====
+    let y = doc.lastAutoTable.finalY + 10;
+
+    doc.setDrawColor(180); // gray
+    doc.setLineWidth(0.3);
+    doc.line(10, y - 5, 200, y - 5);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+
+    doc.text(`SGST (2.5%): `, 150, y);
+    doc.text(`Rs. ${selectedOrder.sgst.toFixed(2)}`, 190, y, {
+      align: "right",
+    });
+
+    doc.text(`CGST (2.5%): `, 150, y + 8);
+    doc.text(`Rs. ${selectedOrder.cgst.toFixed(2)}`, 190, y + 8, {
+      align: "right",
+    });
+
+    if (selectedOrder.discount > 0) {
+      doc.text(`Discount: `, 150, y + 16);
+      doc.text(`Rs. ${selectedOrder.discount.toFixed(2)}`, 190, y + 16, {
+        align: "right",
+      });
+    }
+
+    if (selectedOrder.tip > 0) {
+      doc.text(`Tip: `, 150, y + 24);
+      doc.text(`Rs. ${selectedOrder.tip.toFixed(2)}`, 190, y + 24, {
+        align: "right",
+      });
+    }
+    // ===== Grand Total =====
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(14);
+    doc.text(`Total:`, 150, y + 40);
+    doc.text(`Rs. ${selectedOrder.total.toFixed(2)}`, 190, y + 40, {
+      align: "right",
+    });
+
+    // ===== QR Code (bottom left) =====
+    const qrData = `https://cafe-rustic-ui.vercel.app/`;
+    const qrImage = await QRCode.toDataURL(qrData);
+
+    doc.addImage(qrImage, "PNG", 14, y + 50, 40, 40); // position + size
+
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.text("Scan QR to give feedback", 14, y + 95);
+
+    // ===== Footer =====
+    let footerY = y + 55;
+
+    // Divider line above footer
+    doc.setDrawColor(180);
+    doc.setLineWidth(0.3);
+    doc.line(10, footerY - 10, 200, footerY - 10);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(11);
+    doc.text("We hope to see you again soon!", 105, y + 60, {
+      align: "center",
+    });
+
+    // ===== Watermark on Every Page =====
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(40);
+      doc.setTextColor(150); // gray
+
+      // Transparency
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.1 }));
+
+      // Diagonal watermark
+      doc.text("Powered by Café Rustic", 35, 150, { angle: 45 });
+
+      doc.restoreGraphicsState();
+    }
+
+    // Auto-download
+    doc.save(`Receipt_${Date.now()}.pdf`);
   };
 
   const renderOrders = (orders) => (
@@ -202,8 +340,6 @@ export default function OrderHistory({
       ))}
     </motion.ul>
   );
-
-  
 
   return (
     <section
@@ -395,7 +531,7 @@ export default function OrderHistory({
                   Close
                 </button>
                 <button
-                  onClick={() => window.print()}
+                  onClick={generateReceiptPDF}
                   className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md hover:shadow-amber-500/40 transition"
                 >
                   Print
