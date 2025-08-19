@@ -238,7 +238,7 @@ setOrderNumber(newOrderNumber);
   };
   
   // Called when user confirms payment in CheckoutPanel
-  const finalizeCheckout = async ({ paymentMethod, tip, splitCount, totalWithGST }) => {
+  const finalizeCheckout = async ({ paymentMethod, tip, splitCount, totalWithGST, sgst, cgst }) => {
     if (!pendingOrder) return;
   
     const orderToSave = {
@@ -247,6 +247,8 @@ setOrderNumber(newOrderNumber);
       split_count: splitCount,
       payment_method: paymentMethod,
       total: totalWithGST, // update with tip
+      sgst,
+      cgst
     };
   
     // ✅ Insert into orders table
