@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "./components/Navbar";
+import { motion, AnimatePresence } from "framer-motion";
+
 import Hero from "./components/Hero";
 import About from "./components/About";
 import MenuSection from "./components/MenuSection";
@@ -22,6 +24,7 @@ import SignInModal from "./components/SignInModal";
 import SignUpModal from "./components/SignUpModal";
 import ProfileModal from "./components/ProfileModal";
 import { fetchMenu, fetchUserProfile, updateUserDetails , addOrder, fetchOrders} from "./supabaseApi";
+import CheckoutPanel from "./components/CheckoutPanel"
 
 export default function CafeRustic() {
   const [variantItem, setVariantItem] = useState(null);
@@ -38,6 +41,8 @@ export default function CafeRustic() {
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState(() => localStorage.getItem("query") || "");
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+const [pendingOrder, setPendingOrder] = useState(null);
   const [cart, setCart] = useState(() => {
     try {
       const raw = localStorage.getItem("cafe_cart_v2");
@@ -207,11 +212,11 @@ export default function CafeRustic() {
 
   const clearCart = () => setCart([]);
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cart.length === 0) return;
   
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
-    setOrderNumber(newOrderNumber);
+setOrderNumber(newOrderNumber);
   
     const earnedPoints = Math.floor(totalPrice / 10);
     const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice);
@@ -227,25 +232,48 @@ export default function CafeRustic() {
       earned_points: earnedPoints,
     };
   
+    // 👉 Instead of saving directly, hold the order and open CheckoutPanel
+    setPendingOrder(newOrder);
+    setCheckoutOpen(true);
+  };
+  
+  // Called when user confirms payment in CheckoutPanel
+  const finalizeCheckout = async ({ paymentMethod, tip, splitCount }) => {
+    if (!pendingOrder) return;
+  
+    const orderToSave = {
+      ...pendingOrder,
+      tip,
+      split_count: splitCount,
+      payment_method: paymentMethod,
+      total: pendingOrder.total + tip, // update with tip
+    };
+  
     // ✅ Insert into orders table
-    await addOrder(newOrder);
+    await addOrder(orderToSave);
   
     // ✅ Update loyalty points
     await updateUserDetails(userProfile.id, {
-      loyalty_points: loyaltyPoints - discount + earnedPoints,
+      loyalty_points:
+        loyaltyPoints - pendingOrder.discount + pendingOrder.earned_points,
     });
-    setLoyaltyPoints((prev) => prev - discount + earnedPoints);
+    setLoyaltyPoints(
+      (prev) => prev - pendingOrder.discount + pendingOrder.earned_points
+    );
     setRedeemPoints(0);
   
-    // ✅ Reload order history from orders table
+    // ✅ Reload order history
     const updatedOrders = await fetchOrders(userProfile.id);
     setOrderHistory(updatedOrders);
   
-    toast.success(`You earned ${earnedPoints} points!`);
+    toast.success(`You earned ${pendingOrder.earned_points} points!`);
+    toast.success(`Your order placed successfully.`)
   
     clearCart();
-    setOrderModalOpen(true);
+    setCheckoutOpen(false);
     setCartOpen(false);
+    setOrderModalOpen(true);
+
   };
   
 
@@ -605,6 +633,42 @@ export default function CafeRustic() {
           }}
           theme={theme}
         />
+
+<AnimatePresence>
+  {checkoutOpen && (
+    <motion.div
+      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="relative w-full max-w-lg"
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ duration: 0.25, ease: "easeInOut" }}
+      >
+        <button
+          onClick={() => setCheckoutOpen(false)}
+          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+        >
+          ✕
+        </button>
+
+        <CheckoutPanel
+          cart={cart}
+          pendingOrder={pendingOrder}
+          onConfirm={finalizeCheckout}
+          theme={theme}
+          onClose={() => setCheckoutOpen(false)}
+        />
+      </motion.div>
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
       </div>
     </>
   );
