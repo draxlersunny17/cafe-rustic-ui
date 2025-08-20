@@ -190,19 +190,21 @@ export async function updateUserDetails(userId, updates) {
         apikey: SUPABASE_ANON_KEY,
         Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
         "Content-Type": "application/json",
+        Prefer: "return=representation", // 👈 this is key
       },
       body: JSON.stringify(updates),
     });
 
     if (!res.ok) throw new Error("Failed to update user");
 
-    const data = await res.json();
-    return data[0]; // Supabase returns updated row(s)
+    const data = await res.json(); // now will have data
+    return data[0];
   } catch (err) {
     console.error("Error updating user:", err);
     return null;
   }
 }
+
 
 export async function addOrder(order) {
   try {

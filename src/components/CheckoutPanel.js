@@ -92,7 +92,8 @@ export default function CheckoutPanel({
     // ===== Order Info =====
     doc.setFontSize(12);
     doc.text(`Date: ${new Date().toLocaleString()}`, 14, 40);
-    doc.text(`Payment Type: ${paymentMethod.toUpperCase()}`, 14, 47);
+    doc.text(`Payment Mode: ${paymentMethod.toUpperCase()}`, 14, 47);
+    doc.text(`No of Person: ${splitCount}`, 14, 54);
 
     // ===== Table =====
     const tableData = cart.map((item) => [
@@ -105,7 +106,7 @@ export default function CheckoutPanel({
     autoTable(doc, {
       head: [["Item", "Qty", "Price", "Total"]],
       body: tableData,
-      startY: 55,
+      startY: 60,
       theme: "striped",
       styles: { fontSize: 11 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255 },
