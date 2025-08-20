@@ -8,6 +8,7 @@ export default function CheckoutPanel({
   onClose,
   theme,
   pendingOrder,
+  userProfile
 }) {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [tip, setTip] = useState(0);
@@ -89,11 +90,30 @@ export default function CheckoutPanel({
     // Divider
     doc.line(10, 32, 200, 32);
 
-    // ===== Order Info =====
-    doc.setFontSize(12);
-    doc.text(`Date: ${new Date().toLocaleString()}`, 14, 40);
-    doc.text(`Payment Mode: ${paymentMethod.toUpperCase()}`, 14, 47);
-    doc.text(`No of Person: ${splitCount}`, 14, 54);
+   // ===== Billed To =====
+   doc.setFontSize(12);
+   doc.setFont("helvetica", "bold");
+   doc.text("Billed To:", 14, 40);
+ 
+   doc.setFont("helvetica", "normal");
+   doc.text(`${userProfile.name}`, 14, 47);
+   doc.text(`${userProfile.email}`, 14, 54);
+   doc.text(`${userProfile.phone}`, 14, 61);
+   if (userProfile.address) {
+     doc.text(`${userProfile.address}`, 14, 68);
+   }
+ 
+   // ===== Invoice Info (top-right corner) =====
+   doc.setFontSize(12);
+   doc.setFont("helvetica", "normal");
+   const invoiceNo = Math.floor(10000 + Math.random() * 90000);
+   const invoiceDate = new Date().toLocaleString();
+   doc.text(`Invoice No. ${invoiceNo}`, 190, 40, { align: "right" });
+   doc.text(`${invoiceDate}`, 190, 47, { align: "right" });
+ 
+   // ===== Order Info (below invoice info) =====
+   doc.text(`Payment Mode: ${paymentMethod.toUpperCase()}`, 150, 61);
+   doc.text(`No of Person: ${splitCount}`, 150, 68);
 
     // ===== Table =====
     const tableData = cart.map((item) => [
@@ -106,7 +126,7 @@ export default function CheckoutPanel({
     autoTable(doc, {
       head: [["Item", "Qty", "Price", "Total"]],
       body: tableData,
-      startY: 60,
+      startY: 75,
       theme: "striped",
       styles: { fontSize: 11 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255 },

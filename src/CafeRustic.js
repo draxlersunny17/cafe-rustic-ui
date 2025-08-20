@@ -541,6 +541,7 @@ setOrderNumber(newOrderNumber);
           formatINR={formatINR}
           theme={theme}
           onReorder={reorderOrder}
+          userProfile={userProfile}
         />
 
         <Contact theme={theme} userProfile={userProfile} />
@@ -664,6 +665,7 @@ setOrderNumber(newOrderNumber);
           onConfirm={finalizeCheckout}
           theme={theme}
           onClose={() => setCheckoutOpen(false)}
+          userProfile={userProfile}
         />
       </motion.div>
     </motion.div>
