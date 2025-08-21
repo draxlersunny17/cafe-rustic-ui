@@ -29,20 +29,14 @@ export default function SpecialOffersCarousel({ theme, userProfile }) {
     },
     {
       id: 5,
-      title: "Free Coffee Refills",
-      description: "Unlimited refills on drip coffee all week.",
-      img: "https://images.unsplash.com/photo-1511920170033-f8396924c348?w=800",
-    },
-    {
-      id: 6,
       title: "Lunch Combo Deal",
-      description: "Get a sandwich, drink, and snack for Rs.300.",
+      description: "Get a sandwich, cold brew, and snack for Rs.300.",
       img: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800",
     },
     {
-      id: 7,
+      id: 6,
       title: "Weekend Happy Hour",
-      description: "50% off select beverages from 4 PM to 6 PM.",
+      description: "30% off select beverages from 4 PM to 6 PM.",
       img: "https://images.unsplash.com/photo-1551024601-bec78aea704b?w=800",
     },
   ];

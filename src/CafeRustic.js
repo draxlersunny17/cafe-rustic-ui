@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import Navbar from "./components/Navbar";
 import { motion, AnimatePresence } from "framer-motion";
-
+import FeedbackModal from "./components/FeedbackModal";
 import Hero from "./components/Hero";
 import About from "./components/About";
 import MenuSection from "./components/MenuSection";
@@ -23,8 +23,14 @@ import VariantSelector from "./components/VariantSelector";
 import SignInModal from "./components/SignInModal";
 import SignUpModal from "./components/SignUpModal";
 import ProfileModal from "./components/ProfileModal";
-import { fetchMenu, fetchUserProfile, updateUserDetails , addOrder, fetchOrders} from "./supabaseApi";
-import CheckoutPanel from "./components/CheckoutPanel"
+import {
+  fetchMenu,
+  fetchUserProfile,
+  updateUserDetails,
+  addOrder,
+  fetchOrders,
+} from "./supabaseApi";
+import CheckoutPanel from "./components/CheckoutPanel";
 
 export default function CafeRustic() {
   const [variantItem, setVariantItem] = useState(null);
@@ -42,7 +48,7 @@ export default function CafeRustic() {
   const [category, setCategory] = useState("All");
   const [query, setQuery] = useState(() => localStorage.getItem("query") || "");
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-const [pendingOrder, setPendingOrder] = useState(null);
+  const [pendingOrder, setPendingOrder] = useState(null);
   const [cart, setCart] = useState(() => {
     try {
       const raw = localStorage.getItem("cafe_cart_v2");
@@ -57,7 +63,7 @@ const [pendingOrder, setPendingOrder] = useState(null);
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderNumber, setOrderNumber] = useState(null);
   const [redeemPoints, setRedeemPoints] = useState(0);
-
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const formatINR = (n) => `₹${n}`;
 
   // ----------- USEEFFECT HOOKS -----------------
@@ -99,9 +105,7 @@ const [pendingOrder, setPendingOrder] = useState(null);
       }
     };
     restoreUser();
-  }, []); 
-
-
+  }, []);
 
   // ----------- MEMOIZED VALUES -----------------
   const cartCount = useMemo(
@@ -214,13 +218,13 @@ const [pendingOrder, setPendingOrder] = useState(null);
 
   const handleCheckout = () => {
     if (cart.length === 0) return;
-  
+
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
-setOrderNumber(newOrderNumber);
-  
+    setOrderNumber(newOrderNumber);
+
     const earnedPoints = Math.floor(totalPrice / 10);
     const discount = Math.min(redeemPoints, loyaltyPoints, totalPrice);
-  
+
     const newOrder = {
       user_id: userProfile.id,
       order_number: newOrderNumber,
@@ -231,16 +235,23 @@ setOrderNumber(newOrderNumber);
       total: totalPrice - discount,
       earned_points: earnedPoints,
     };
-  
+
     // 👉 Instead of saving directly, hold the order and open CheckoutPanel
     setPendingOrder(newOrder);
     setCheckoutOpen(true);
   };
-  
+
   // Called when user confirms payment in CheckoutPanel
-  const finalizeCheckout = async ({ paymentMethod, tip, splitCount, totalWithGST, sgst, cgst }) => {
+  const finalizeCheckout = async ({
+    paymentMethod,
+    tip,
+    splitCount,
+    totalWithGST,
+    sgst,
+    cgst,
+  }) => {
     if (!pendingOrder) return;
-  
+
     const orderToSave = {
       ...pendingOrder,
       tip,
@@ -248,12 +259,12 @@ setOrderNumber(newOrderNumber);
       payment_method: paymentMethod,
       total: totalWithGST, // update with tip
       sgst,
-      cgst
+      cgst,
     };
-  
+
     // ✅ Insert into orders table
     await addOrder(orderToSave);
-  
+
     // ✅ Update loyalty points
     await updateUserDetails(userProfile.id, {
       loyalty_points:
@@ -263,21 +274,19 @@ setOrderNumber(newOrderNumber);
       (prev) => prev - pendingOrder.discount + pendingOrder.earned_points
     );
     setRedeemPoints(0);
-  
+
     // ✅ Reload order history
     const updatedOrders = await fetchOrders(userProfile.id);
     setOrderHistory(updatedOrders);
-  
+
     toast.success(`You earned ${pendingOrder.earned_points} points!`);
-    toast.success(`Your order placed successfully.`)
-  
+    toast.success(`Your order placed successfully.`);
+
     clearCart();
     setCheckoutOpen(false);
     setCartOpen(false);
     setOrderModalOpen(true);
-
   };
-  
 
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -416,9 +425,10 @@ setOrderNumber(newOrderNumber);
       setFavorites(fullProfile.favorites || []);
       setLoyaltyPoints(fullProfile.loyalty_points || 0);
       const orders = await fetchOrders(userId);
-      setOrderHistory(orders);    }
-  }; 
-  
+      setOrderHistory(orders);
+    }
+  };
+
   const handleSignIn = async (profileData, isSignUp = false) => {
     setUserProfile(profileData);
     localStorage.setItem("userId", profileData.id);
@@ -436,16 +446,15 @@ setOrderNumber(newOrderNumber);
 
   const handleLogout = () => {
     setUserProfile(null);
-    localStorage.removeItem("userId");   // clear saved session
+    localStorage.removeItem("userId"); // clear saved session
     setProfileOpen(false);
-    setFavorites([]);                    // clear local state
-    setTheme("light");                   // reset theme locally
-    setOrderHistory([]);                 // clear order history state
-    setLoyaltyPoints(0);                 // reset points
-    setCart([]);                         // empty cart
+    setFavorites([]); // clear local state
+    setTheme("light"); // reset theme locally
+    setOrderHistory([]); // clear order history state
+    setLoyaltyPoints(0); // reset points
+    setCart([]); // empty cart
     window.location.reload();
   };
-  
 
   return (
     <>
@@ -535,7 +544,14 @@ setOrderNumber(newOrderNumber);
           />
         )}
 
-        <Reviews theme={theme} />
+        <Reviews theme={theme} onGiveFeedback={() => setFeedbackOpen(true)} />
+        <FeedbackModal
+          isOpen={feedbackOpen}
+          onClose={() => setFeedbackOpen(false)}
+          theme={theme}
+          userProfile={userProfile}
+        />
+
         <OrderHistory
           orderHistory={orderHistory}
           formatINR={formatINR}
@@ -565,10 +581,7 @@ setOrderNumber(newOrderNumber);
           aria-hidden
         />
 
-        <FloatingButtons
-          cartCount={cartCount}
-          favorites={favorites}
-        />
+        <FloatingButtons cartCount={cartCount} favorites={favorites} />
 
         <CartPanel
           open={cartOpen}
@@ -637,42 +650,40 @@ setOrderNumber(newOrderNumber);
           theme={theme}
         />
 
-<AnimatePresence>
-  {checkoutOpen && (
-    <motion.div
-      className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <motion.div
-        className="relative w-full max-w-lg"
-        initial={{ scale: 0.9, opacity: 0, y: 20 }}
-        animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.9, opacity: 0, y: 20 }}
-        transition={{ duration: 0.25, ease: "easeInOut" }}
-      >
-        <button
-          onClick={() => setCheckoutOpen(false)}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-        >
-          ✕
-        </button>
+        <AnimatePresence>
+          {checkoutOpen && (
+            <motion.div
+              className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="relative w-full max-w-lg"
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                transition={{ duration: 0.25, ease: "easeInOut" }}
+              >
+                <button
+                  onClick={() => setCheckoutOpen(false)}
+                  className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
 
-        <CheckoutPanel
-          cart={cart}
-          pendingOrder={pendingOrder}
-          onConfirm={finalizeCheckout}
-          theme={theme}
-          onClose={() => setCheckoutOpen(false)}
-          userProfile={userProfile}
-        />
-      </motion.div>
-    </motion.div>
-  )}
-</AnimatePresence>
-
-
+                <CheckoutPanel
+                  cart={cart}
+                  pendingOrder={pendingOrder}
+                  onConfirm={finalizeCheckout}
+                  theme={theme}
+                  onClose={() => setCheckoutOpen(false)}
+                  userProfile={userProfile}
+                />
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </>
   );

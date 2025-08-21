@@ -249,3 +249,49 @@ export async function fetchOrders(userId) {
     return [];
   }
 }
+
+export async function fetchFeedback() {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/feedback?select=*`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+    if (!response.ok) throw new Error("Failed to fetch feedback");
+    const data = await response.json();
+
+    // newest first
+    return data.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  } catch (err) {
+    console.error("Error fetching feedback:", err);
+    return [];
+  }
+}
+
+export async function addFeedback(feedback) {
+  try {
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/feedback`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation", // return inserted row
+      },
+      body: JSON.stringify(feedback),
+    });
+
+    if (!response.ok) throw new Error("Failed to insert feedback");
+
+    const data = await response.json();
+    return data[0]; // inserted feedback row
+  } catch (error) {
+    console.error("Error adding feedback:", error);
+    return null;
+  }
+}

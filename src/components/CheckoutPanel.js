@@ -164,7 +164,7 @@ export default function CheckoutPanel({
     doc.text(`Rs. ${grandTotal.toFixed(2)}`, 190, y + 40, { align: "right" });
 
      // ===== QR Code (bottom left) =====
-  const qrData = `https://cafe-rustic-ui.vercel.app/`;
+  const qrData = `https://cafe-rustic-ui.vercel.app/feedback`;
   const qrImage = await QRCode.toDataURL(qrData);
 
   doc.addImage(qrImage, "PNG", 14, y + 50, 40, 40); // position + size
