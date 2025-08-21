@@ -22,7 +22,6 @@ export default function ProfilePanel({
 
   const firstName = userProfile?.name ? userProfile.name.split(" ")[0] : "";
 
-
   // Determine current tier
   const currentTier =
     loyaltyTiers
@@ -51,8 +50,7 @@ export default function ProfilePanel({
     const today = new Date();
     const dob = new Date(userProfile.dob);
     return (
-      today.getDate() === dob.getDate() &&
-      today.getMonth() === dob.getMonth()
+      today.getDate() === dob.getDate() && today.getMonth() === dob.getMonth()
     );
   })();
 
@@ -105,13 +103,21 @@ export default function ProfilePanel({
                   <div className="flex items-center space-x-4">
                     {/* Avatar Circle */}
                     <div
-                      className={`w-12 h-12 flex items-center justify-center rounded-full ${
+                      className={`w-16 h-16 flex items-center justify-center rounded-full overflow-hidden ${
                         theme === "dark"
                           ? "bg-gray-700 text-gray-200"
                           : "bg-gray-200 text-gray-700"
                       }`}
                     >
-                      <User className="w-6 h-6" />
+                      {userProfile.avatar ? (
+                        <img
+                          src={`/images/avatars/${userProfile.avatar}`}
+                          alt="User Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User className="w-6 h-6" />
+                      )}
                     </div>
 
                     <div className="flex flex-col">
@@ -162,8 +168,8 @@ export default function ProfilePanel({
                   >
                     <Gift className="w-6 h-6 text-pink-500" />
                     <p>
-                      Happy Birthday, {firstName}! 🎉  
-                      Enjoy a free coffee on us today ☕
+                      Happy Birthday, {firstName}! 🎉 Enjoy a free coffee on us
+                      today ☕
                     </p>
                   </div>
                 )}

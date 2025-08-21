@@ -16,7 +16,18 @@ export default function SignUpModal({
     phone: "",
     password: "",
     dob: "",
+    avatar: "",
   });
+
+  const avatars = [
+    "avatar1.png",
+    "avatar2.png",
+    "avatar3.png",
+    "avatar4.png",
+    "avatar5.png",
+    "avatar6.png",
+  ];
+
 
   if (!isOpen) return null;
   const isDark = theme === "dark";
@@ -55,6 +66,7 @@ export default function SignUpModal({
         name: `${form.firstName} ${form.lastName}`,
         dob: form.dob,
         theme: theme || "light",
+        avatar: form.avatar,
         loyalty_points: 0,
         favorites: [],
       };
@@ -168,6 +180,25 @@ export default function SignUpModal({
                 : "bg-gray-100 border-gray-300"
             }`}
           />
+           {/* Avatar Picker */}
+           <div>
+            <p className="mb-2 font-medium">Choose an Avatar</p>
+            <div className="grid grid-cols-3 gap-3 justify-items-center">
+              {avatars.map((avatar, idx) => (
+                <img
+                  key={idx}
+                  src={`/images/avatars/${avatar}`}
+                  alt={`Avatar ${idx + 1}`}
+                  onClick={() => setForm({ ...form, avatar })}
+                  className={`w-20 h-20 rounded-full cursor-pointer border-4 transition ${
+                    form.avatar === avatar
+                      ? "border-green-500 scale-105"
+                      : "border-transparent"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
           <div className="flex justify-between items-center mt-2">
             <span
               className="text-sm text-blue-500 hover:underline cursor-pointer"
