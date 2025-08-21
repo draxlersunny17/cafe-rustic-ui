@@ -112,7 +112,9 @@ export default function Contact({ theme, userProfile }) {
             />
             <button
               type="submit"
-              className="w-full px-6 py-3 rounded-lg bg-amber-400 font-semibold hover:bg-amber-500 text-white transition-colors"
+              className={`w-full px-6 py-3 rounded-lg font-semibold transition-colors bg-amber-400 hover:bg-amber-500
+    ${theme === "dark" ? "text-black" : "text-white"}
+  `}
             >
               Request Booking
             </button>
