@@ -23,6 +23,7 @@ import VariantSelector from "./components/VariantSelector";
 import SignInModal from "./components/SignInModal";
 import SignUpModal from "./components/SignUpModal";
 import ProfileModal from "./components/ProfileModal";
+import AIChatAssistant from "./components/AIChatAssistant";
 import {
   fetchMenu,
   fetchUserProfile,
@@ -166,7 +167,7 @@ export default function CafeRustic() {
     await updateUserDetails(userProfile.id, { favorites: updated });
   };
 
-  const addToCart = (menuItem, qty = 1, variant = null) => {
+  const addToCart = (menuItem, qty = 1, variant = null, openCart = true) => {
     if (!userProfile) {
       toast.warning("Please sign in to add items to your cart!");
       setSignInOpen(true);
@@ -195,7 +196,7 @@ export default function CafeRustic() {
       ];
     });
     setProfileOpen(false);
-    setCartOpen(true);
+    if (openCart) setCartOpen(true);
   };
 
   const incQty = (id) =>
@@ -216,7 +217,7 @@ export default function CafeRustic() {
 
   const clearCart = () => setCart([]);
 
-  const handleCheckout = () => {
+  const handleCheckout = (fromAIChatAssistant=false) => {
     if (cart.length === 0) return;
 
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
@@ -238,7 +239,10 @@ export default function CafeRustic() {
 
     // 👉 Instead of saving directly, hold the order and open CheckoutPanel
     setPendingOrder(newOrder);
+
+    if(!fromAIChatAssistant) {
     setCheckoutOpen(true);
+    }
   };
 
   // Called when user confirms payment in CheckoutPanel
@@ -249,6 +253,7 @@ export default function CafeRustic() {
     totalWithGST,
     sgst,
     cgst,
+    fromAIChatAssistant=false
   }) => {
     if (!pendingOrder) return;
 
@@ -280,12 +285,18 @@ export default function CafeRustic() {
     setOrderHistory(updatedOrders);
 
     toast.success(`You earned ${pendingOrder.earned_points} points!`);
-    toast.success(`Your order placed successfully.`);
 
     clearCart();
     setCheckoutOpen(false);
     setCartOpen(false);
-    setOrderModalOpen(true);
+
+
+    if(!fromAIChatAssistant) {
+      toast.success(`Your order placed successfully.`);
+
+      setTimeout(() => setOrderModalOpen(true), 2000);
+
+    }
   };
 
   const handleDownloadPDF = () => {
@@ -684,6 +695,18 @@ export default function CafeRustic() {
             </motion.div>
           )}
         </AnimatePresence>
+
+        <AIChatAssistant
+          menuItems={menuItems}
+          onAddToCart={(item) => addToCart(item, item.qty, null, false)}
+          theme={theme}
+          userProfile={userProfile}
+          onCheckout={handleCheckout}
+  onConfirmPayment={finalizeCheckout} 
+  pendingOrder={pendingOrder}   // ✅ pass down
+  cart={cart}  
+  orderNumber={orderNumber}
+        />
       </div>
     </>
   );

@@ -295,3 +295,15 @@ export async function addFeedback(feedback) {
     return null;
   }
 }
+
+export async function askMenuAssistant(messages, menuItems) {
+  const res = await fetch("/api/aiMenuAssistant", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages, menuItems }),
+  });
+
+  if (!res.ok) throw new Error("AI request failed");
+  return res.json(); // { reply }
+}
+
