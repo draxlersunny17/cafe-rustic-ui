@@ -696,6 +696,8 @@ export default function CafeRustic() {
           )}
         </AnimatePresence>
 
+
+{userProfile && (
         <AIChatAssistant
           menuItems={menuItems}
           onAddToCart={(item) => addToCart(item, item.qty, null, false)}
@@ -707,6 +709,7 @@ export default function CafeRustic() {
   cart={cart}  
   orderNumber={orderNumber}
         />
+)}
       </div>
     </>
   );

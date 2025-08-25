@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { FaRobot } from "react-icons/fa";
-import { Bot, Send } from "lucide-react";
+import { Send } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
@@ -420,10 +420,35 @@ export default function AIChatAssistant({
         body: JSON.stringify({ messages: [...messages, userMsg], menuItems }),
       });
       const data = await res.json();
+      
+      let replyText = data.reply;
+      let actionMatch = replyText.match(/###ACTION###([\s\S]*)/);
+      
+      if (actionMatch) {
+        try {
+          const action = JSON.parse(actionMatch[1].trim());
+      
+          if (action.type === "addToCart") {
+            const found = menuItems.find(
+              (it) => it.name.toLowerCase() === action.itemName.toLowerCase()
+            );
+            if (found) {
+              onAddToCart({ ...found, qty: action.qty || 1 });
+            }
+          }
+      
+          // strip the action block from what user sees
+          replyText = replyText.replace(/###ACTION###[\s\S]*/, "").trim();
+        } catch (err) {
+          console.error("Failed to parse action JSON:", err);
+        }
+      }
+      
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.reply },
+        { role: "assistant", content: replyText },
       ]);
+      
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -590,7 +615,7 @@ export default function AIChatAssistant({
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`fixed bottom-20 right-6 w-80 h-[28rem] rounded-2xl shadow-2xl flex flex-col border ${
+          className={`fixed bottom-20 right-6 w-80 h-[28rem] rounded-2xl shadow-2xl flex flex-col border z-50 ${
             theme === "dark"
               ? "bg-gray-900 text-white border-gray-700"
               : "bg-white text-gray-900 border-gray-200"
@@ -602,7 +627,12 @@ export default function AIChatAssistant({
               theme === "dark" ? "bg-gray-800" : "bg-blue-600 text-white"
             }`}
           >
-            <Bot /> Café Chatbot
+             <img
+                      src="images/cafebot.png"
+                      alt="chat-bot"
+                      className="w-8 h-8 rounded-2xl"
+                    />
+                     Café Chatbot
           </div>
 
           {/* Messages */}
@@ -619,11 +649,11 @@ export default function AIChatAssistant({
               >
                 {/* Assistant Avatar */}
                 {msg.role === "assistant" && (
-                  <div className="w-8 h-8 flex items-center justify-center rounded-full bg-white">
+                  <div className="w-6 h-6 flex items-center justify-center rounded-full bg-white">
                     <img
-                      src="images/cafebot.svg"
+                      src="images/cafebot.png"
                       alt="Bot"
-                      className="w-6 h-6"
+                      className="w-6 h-6 rounded-2xl"
                     />
                   </div>
                 )}
