@@ -279,15 +279,64 @@ export default function AIChatAssistant({
         }
 
         setTempTip(tipValue);
-        setCheckoutStep("split");
+        if (userProfile?.loyalty_points > 0) {
+          setCheckoutStep("loyalty");
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: `🎁 You have ${userProfile.loyalty_points} loyalty points. Each point = ₹1. Do you want to redeem some? (say "yes", "no", or enter amount)`,
+            },
+          ]);
+        } else {
+          setCheckoutStep("split");
+
+          setMessages((prev) => [
+            ...prev,
+            {
+              role: "assistant",
+              content: `👍 Tip set to ${
+                tipValue <= 10 ? tipValue + "%" : "₹" + tipValue
+              }. How many people are splitting the bill?`,
+            },
+          ]);
+        }
+        setLoading(false);
+        return;
+      }
+
+      // === STEP: Loyalty ===
+      if (checkoutStep === "loyalty") {
+        const reply = userMsg.content.toLowerCase();
+        let redeem = 0;
+
+        if (reply === "yes") {
+          redeem = userProfile.loyalty_points;
+        } else if (reply === "no") {
+          redeem = 0;
+        } else if (!isNaN(Number(reply))) {
+          redeem = Math.min(Number(reply), userProfile.loyalty_points);
+        }
+
+        // Save discount as "redeemed points"
+        pendingOrder.discount = (pendingOrder.discount || 0) + redeem;
 
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: `👍 Tip set to ${
-              tipValue <= 10 ? tipValue + "%" : "₹" + tipValue
-            }. How many people are splitting the bill?`,
+            content: redeem
+              ? `✅ Redeemed ${redeem} points (₹${redeem}).`
+              : "👍 No loyalty points redeemed.",
+          },
+        ]);
+
+        setCheckoutStep("split");
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `How many people are splitting the bill?`,
           },
         ]);
         setLoading(false);
@@ -674,9 +723,8 @@ export default function AIChatAssistant({
       {/* Chat Panel */}
       {open && (
         <motion.div
-        drag
-        dragMomentum={false}
-     
+          drag
+          dragMomentum={false}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`fixed bottom-20 right-6 w-80 h-[28rem] rounded-2xl shadow-2xl flex flex-col border z-50 ${
