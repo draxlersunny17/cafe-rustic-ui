@@ -67,18 +67,18 @@ export default function AIChatAssistant({
   const sendMessage = async () => {
     if (!input.trim()) return;
     const userMsg = { role: "user", content: input };
-  
+
     // Always show user message right away
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
     setLoading(true);
-  
+
     // === If waiting for a variant choice ===
     if (pendingVariant) {
       const chosen = pendingVariant.item.menu_item_variants.find((v) =>
         userMsg.content.toLowerCase().includes(v.name.toLowerCase())
       );
-  
+
       if (chosen) {
         onAddToCart({
           ...pendingVariant.item,
@@ -86,7 +86,7 @@ export default function AIChatAssistant({
           price: chosen.price,
           qty: pendingVariant.qty,
         });
-  
+
         setMessages((prev) => [
           ...prev,
           {
@@ -110,7 +110,7 @@ export default function AIChatAssistant({
             }),
           });
           const data = await res.json();
-  
+
           setMessages((prev) => [
             ...prev,
             { role: "assistant", content: data.reply },
@@ -125,38 +125,84 @@ export default function AIChatAssistant({
         return;
       }
     }
-  
+
     // === Handle "Add to Cart" intent ===
     const addIntents = handleAddToCartIntent(userMsg.content);
     if (addIntents && addIntents.length > 0) {
+      let variantHandled = false;
+
       for (const addIntent of addIntents) {
         const foundItem = addIntent.item;
-  
-        if (foundItem.menu_item_variants && foundItem.menu_item_variants.length > 0) {
-          // Item has variants → ask first
-          try {
-            const res = await fetch("/api/aiMenuAssistant", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                messages: [...messages, userMsg],
-                menuItems,
-                context: { step: "variant", item: foundItem, qty: addIntent.qty },
-              }),
+
+        if (
+          foundItem.menu_item_variants &&
+          foundItem.menu_item_variants.length > 0
+        ) {
+          // Check if user already specified a variant
+          const chosenVariant = foundItem.menu_item_variants.find((v) =>
+            userMsg.content.toLowerCase().includes(v.name.toLowerCase())
+          );
+
+          if (chosenVariant) {
+            // User already gave variant → add directly
+            onAddToCart({
+              ...foundItem,
+              name: `${foundItem.name} (${chosenVariant.name})`,
+              price: chosenVariant.price,
+              qty: addIntent.qty,
             });
-            const data = await res.json();
-  
+
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: data.reply },
+              {
+                role: "assistant",
+                content: `✅ Added ${addIntent.qty} × ${foundItem.name} (${chosenVariant.name}) to your cart.`,
+              },
             ]);
-  
-            setPendingVariant({ item: foundItem, qty: addIntent.qty });
-          } catch (err) {
-            setMessages((prev) => [
-              ...prev,
-              { role: "assistant", content: "⚠️ Error fetching AI variant response." },
-            ]);
+          } else {
+            // Ask user to pick a variant (normal flow)
+            if (!variantHandled) {
+              try {
+                const res = await fetch("/api/aiMenuAssistant", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    messages: [...messages, userMsg],
+                    menuItems,
+                    context: {
+                      step: "variant",
+                      item: foundItem,
+                      qty: addIntent.qty,
+                    },
+                  }),
+                });
+                const data = await res.json();
+
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content: data.reply },
+                ]);
+
+                setPendingVariant({ item: foundItem, qty: addIntent.qty });
+                variantHandled = true;
+              } catch (err) {
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "assistant",
+                    content: "⚠️ Error fetching AI variant response.",
+                  },
+                ]);
+              }
+            } else {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  role: "assistant",
+                  content: `ℹ️ I'll ask about ${foundItem.name} after you choose your first item variant.`,
+                },
+              ]);
+            }
           }
         } else {
           // No variants → add directly
@@ -165,16 +211,27 @@ export default function AIChatAssistant({
             ...prev,
             {
               role: "assistant",
-              content: `✅ Added ${addIntent.qty} × ${foundItem.name} to your cart. Say "checkout" when you're ready!`,
+              content: `✅ Added ${addIntent.qty} × ${foundItem.name} to your cart.`,
             },
           ]);
         }
       }
-  
+
+      // Only show checkout if no variant is pending
+      if (!variantHandled) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: `Say "checkout" when you're ready!`,
+          },
+        ]);
+      }
+
       setLoading(false);
       return;
     }
-  
+
     // === Normal chat flow ===
     try {
       // === STEP: Payment Method ===
@@ -186,7 +243,7 @@ export default function AIChatAssistant({
           );
           setTempPayment(selected);
           setCheckoutStep("tip");
-  
+
           setMessages((prev) => [
             ...prev,
             {
@@ -206,7 +263,7 @@ export default function AIChatAssistant({
         setLoading(false);
         return;
       }
-  
+
       // === STEP: Tip ===
       if (checkoutStep === "tip") {
         const tipText = userMsg.content.toLowerCase();
@@ -220,7 +277,6 @@ export default function AIChatAssistant({
         } else if (!isNaN(Number(tipText))) {
           tipValue = Number(tipText); // treat plain number as fixed ₹
         }
-        
 
         setTempTip(tipValue);
         setCheckoutStep("split");
@@ -244,7 +300,7 @@ export default function AIChatAssistant({
         if (!isNaN(num) && num > 0) {
           setTempSplit(num);
           setCheckoutStep("confirm");
-  
+
           try {
             const res = await fetch("/api/aiMenuAssistant", {
               method: "POST",
@@ -263,7 +319,7 @@ export default function AIChatAssistant({
               }),
             });
             const data = await res.json();
-  
+
             setMessages((prev) => [
               ...prev,
               { role: "assistant", content: data.reply },
@@ -271,19 +327,24 @@ export default function AIChatAssistant({
           } catch (err) {
             setMessages((prev) => [
               ...prev,
-              { role: "assistant", content: "⚠️ Error calculating bill with AI." },
+              {
+                role: "assistant",
+                content: "⚠️ Error calculating bill with AI.",
+              },
             ]);
           }
         } else {
           setMessages((prev) => [
             ...prev,
-            { role: "assistant", content: "⚠️ Please enter a valid number of people." },
+            {
+              role: "assistant",
+              content: "⚠️ Please enter a valid number of people.",
+            },
           ]);
         }
         setLoading(false);
         return;
       }
-      
 
       // === STEP: Confirm ===
       if (checkoutStep === "confirm") {
@@ -371,7 +432,7 @@ export default function AIChatAssistant({
         setLoading(false);
         return;
       }
-  
+
       // === Checkout Trigger ===
       if (
         checkoutStep === null &&
@@ -388,7 +449,7 @@ export default function AIChatAssistant({
           setLoading(false);
           return;
         }
-  
+
         if (!cart || cart.length === 0) {
           setMessages((prev) => [
             ...prev,
@@ -413,7 +474,7 @@ export default function AIChatAssistant({
         setLoading(false);
         return;
       }
-  
+
       // === Normal Q&A (fallback to AI API) ===
       const res = await fetch("/api/aiMenuAssistant", {
         method: "POST",
@@ -421,10 +482,10 @@ export default function AIChatAssistant({
         body: JSON.stringify({ messages: [...messages, userMsg], menuItems }),
       });
       const data = await res.json();
-  
+
       let replyText = data.reply;
       let actionMatch = replyText.match(/###ACTION###([\s\S]*)/);
-  
+
       if (actionMatch) {
         try {
           const action = JSON.parse(actionMatch[1].trim());
@@ -444,12 +505,11 @@ export default function AIChatAssistant({
           console.error("Failed to parse action JSON:", err);
         }
       }
-  
+
       setMessages((prev) => [
         ...prev,
         { role: "assistant", content: replyText },
       ]);
-
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -459,7 +519,7 @@ export default function AIChatAssistant({
       setLoading(false);
     }
   };
-  
+
   const generateReceiptPDF = async ({
     cart,
     userProfile,
@@ -614,6 +674,9 @@ export default function AIChatAssistant({
       {/* Chat Panel */}
       {open && (
         <motion.div
+        drag
+        dragMomentum={false}
+     
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={`fixed bottom-20 right-6 w-80 h-[28rem] rounded-2xl shadow-2xl flex flex-col border z-50 ${
