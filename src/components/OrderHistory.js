@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { formatDateTime } from "../utils/common.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { FiSearch } from "react-icons/fi"; 
 
 export default function OrderHistory({
   orderHistory,
@@ -18,6 +19,15 @@ export default function OrderHistory({
   const [expandedOrders, setExpandedOrders] = useState([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [searchQuery, setSearchQuery] = useState(""); // NEW state for search
+
+  // --- Filtered Orders ---
+  const filteredOrders = orderHistory.filter(order =>
+    order.items.some(item =>
+      item.name.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+  );
+
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -368,6 +378,28 @@ export default function OrderHistory({
           Order History
         </h2>
 
+          {/* --- Search Input --- */}
+          {orderHistory.length > 0 && (
+          <div className="flex items-center justify-center mb-6">
+            <div
+              className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-sm w-full max-w-md ${
+                isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
+              }`}
+            >
+              <FiSearch className={`text-lg ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+              <input
+                type="text"
+                placeholder="Search by item name..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={`w-full bg-transparent focus:outline-none text-sm ${
+                  isDark ? "text-white placeholder-gray-400" : "text-gray-800 placeholder-gray-500"
+                }`}
+              />
+            </div>
+          </div>
+        )}
+
         {orderHistory.length === 0 ? (
           <p
             className={`text-center text-lg ${
@@ -378,7 +410,18 @@ export default function OrderHistory({
           </p>
         ) : (
           <>
-            {renderOrders(orderHistory.slice(0, 6))}
+           {(searchQuery.trim() === "" ? orderHistory : filteredOrders).length > 0 ? (
+  renderOrders(
+    searchQuery.trim() === ""
+      ? orderHistory.slice(0, 6)
+      : filteredOrders.slice(0, 6)
+  )
+) : (
+  <p className="text-center text-gray-500 italic mt-4">
+    No results found.
+  </p>
+)}
+
 
             {orderHistory.length > 6 && (
               <div className="mt-8 text-center">
@@ -424,7 +467,24 @@ export default function OrderHistory({
                   ✕
                 </button>
               </div>
-              {renderOrders(orderHistory)}
+               {/* --- Search Bar inside Modal --- */}
+               <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-sm mb-6 max-w-md mx-auto
+                border border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+                <FiSearch className="text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search orders by item..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-transparent focus:outline-none text-sm text-gray-800 dark:text-white placeholder-gray-500"
+                />
+              </div>
+
+              {filteredOrders.length > 0 ? (
+                renderOrders(filteredOrders)
+              ) : (
+                <p className="text-center text-gray-500 italic">No orders match your search.</p>
+              )}
             </motion.div>
           </motion.div>
         )}

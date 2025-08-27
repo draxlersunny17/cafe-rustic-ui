@@ -64,7 +64,7 @@ export default function CheckoutPanel({
         onConfirm({ paymentMethod, tip: appliedTip, splitCount, totalWithGST: grandTotal, sgst, cgst });
       }, 2000);
   
-    }, 10000); // 10s wait before success
+    }, 6000); // 5s wait before success
   };
   
 
