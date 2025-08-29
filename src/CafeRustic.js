@@ -32,6 +32,7 @@ import {
   fetchOrders,
 } from "./supabaseApi";
 import CheckoutPanel from "./components/CheckoutPanel";
+import AIOrderSuggestions from "./components/AIOrderSuggestions";
 
 export default function CafeRustic() {
   const [variantItem, setVariantItem] = useState(null);
@@ -217,7 +218,7 @@ export default function CafeRustic() {
 
   const clearCart = () => setCart([]);
 
-  const handleCheckout = (fromAIChatAssistant=false) => {
+  const handleCheckout = (fromAIChatAssistant = false) => {
     if (cart.length === 0) return;
 
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
@@ -240,8 +241,8 @@ export default function CafeRustic() {
     // 👉 Instead of saving directly, hold the order and open CheckoutPanel
     setPendingOrder(newOrder);
 
-    if(!fromAIChatAssistant) {
-    setCheckoutOpen(true);
+    if (!fromAIChatAssistant) {
+      setCheckoutOpen(true);
     }
   };
 
@@ -253,7 +254,7 @@ export default function CafeRustic() {
     totalWithGST,
     sgst,
     cgst,
-    fromAIChatAssistant=false
+    fromAIChatAssistant = false,
   }) => {
     if (!pendingOrder) return;
 
@@ -290,12 +291,10 @@ export default function CafeRustic() {
     setCheckoutOpen(false);
     setCartOpen(false);
 
-
-    if(!fromAIChatAssistant) {
+    if (!fromAIChatAssistant) {
       toast.success(`Your order placed successfully.`);
 
       setTimeout(() => setOrderModalOpen(true), 2000);
-
     }
   };
 
@@ -530,6 +529,13 @@ export default function CafeRustic() {
         <Hero />
         <About />
 
+        <AIOrderSuggestions
+          orderHistory={orderHistory}
+          menuItems={menuItems}
+          theme={theme}
+          onAddToCart={addToCart}
+        />
+
         <SpecialOffersCarousel theme={theme} userProfile={userProfile} />
 
         {loading ? (
@@ -696,20 +702,19 @@ export default function CafeRustic() {
           )}
         </AnimatePresence>
 
-
-{userProfile && (
-        <AIChatAssistant
-          menuItems={menuItems}
-          onAddToCart={(item) => addToCart(item, item.qty, null, false)}
-          theme={theme}
-          userProfile={userProfile}
-          onCheckout={handleCheckout}
-  onConfirmPayment={finalizeCheckout} 
-  pendingOrder={pendingOrder}   // ✅ pass down
-  cart={cart}  
-  orderNumber={orderNumber}
-        />
-)}
+        {userProfile && (
+          <AIChatAssistant
+            menuItems={menuItems}
+            onAddToCart={(item) => addToCart(item, item.qty, null, false)}
+            theme={theme}
+            userProfile={userProfile}
+            onCheckout={handleCheckout}
+            onConfirmPayment={finalizeCheckout}
+            pendingOrder={pendingOrder} // ✅ pass down
+            cart={cart}
+            orderNumber={orderNumber}
+          />
+        )}
       </div>
     </>
   );

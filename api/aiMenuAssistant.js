@@ -12,44 +12,60 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { messages, menuItems, context, pendingOrder, cart } = req.body || {};
+    const { messages, menuItems, context, pendingOrder, cart, orderHistory } = req.body || {};
 
     if (!Array.isArray(messages) || !Array.isArray(menuItems)) {
       return res.status(400).json({ error: "Invalid input" });
     }
 
+    // ===== Build History Summary =====
+    const historySummary =
+      orderHistory && orderHistory.length > 0
+        ? `User order history:\n${orderHistory
+            .flatMap(o => o.items.map(i => `${i.name} ×${i.qty}`))
+            .join("\n")}`
+        : "No past order history.";
+
     // ===== System Prompt =====
     const systemPrompt = `You are Café Rustic's assistant. 
 Menu (with prices):\n${menuItems.map(i => `${i.name} - ₹${i.price}`).join("\n")}
 
+${historySummary}
+
 Rules:
-1. If the context step is "variant", DO NOT add the item to the cart yet. 
+1. If the context is "recommendations":
+   - Analyze the user's past order history.
+   - Suggest 2–3 items they might enjoy next, based on their favorites.
+   - Keep tone short, friendly, and conversational, like a barista.
+   - You may upsell (e.g., "Since you like Cappuccino, try Iced Cappuccino") or suggest variety (different flavors/categories).
+   - Do NOT output any ###ACTION### block here — just natural text.
+2. If the context step is "variant", DO NOT add the item to the cart yet. 
    - Only list the available variants with their prices and ask the user to choose. 
    - Do NOT output any ###ACTION### block in this step. 
    - Example: "Okay, one Wrap coming right up! Would you like Veg (₹280) or Chicken (₹300)?"
-2. If an item has multiple variants, suggest them if the user seems unsure, but otherwise let the app handle variant confirmation.
-3. Tax rules: SGST 2.5%, CGST 2.5%.
-4. Apply discount if present in pendingOrder.
-5. Tip: either percentage (5%, 10%) or fixed ₹.
-6. When the user says "checkout", compute the full bill with tax, tip, discount, and split, and return totals.
-7. When confirming actions (like adding items to cart), respond in TWO parts:
+3. If an item has multiple variants, suggest them if the user seems unsure, but otherwise let the app handle variant confirmation.
+4. Tax rules: SGST 2.5%, CGST 2.5%.
+5. Apply discount if present in pendingOrder.
+6. Tip: either percentage (5%, 10%) or fixed ₹.
+7. When the user says "checkout", compute the full bill with tax, tip, discount, and split, and return totals.
+8. When confirming actions (like adding items to cart), respond in TWO parts:
    - First, a friendly confirmation.
    - Then append a machine-readable block starting with '###ACTION###' containing JSON.
    Example:
    "Great choice! I've added 2 × Cappuccino for ₹120 each.
    ###ACTION###
    { "type": "addToCart", "itemName": "Cappuccino", "qty": 2 }"
-8. Only output one JSON action per message.
-9. Never output ###ACTION### when asking about variants.
-10. Always respond with structured bill details (items, subtotal, taxes, discount, tip, grand total, per person if split).
-11. Keep conversation natural, short, and friendly, like a digital barista.`;
+9. Only output one JSON action per message.
+10. Never output ###ACTION### when asking about variants or giving recommendations.
+11. Always respond with structured bill details (items, subtotal, taxes, discount, tip, grand total, per person if split).
+12. Keep conversation natural, short, and friendly, like a digital barista.`;
 
     // ===== Try OpenAI First =====
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [{ role: "system", content: systemPrompt }, ...messages],
-        max_tokens: 300,
+        max_tokens: 400,
       });
 
       return res.status(200).json({
