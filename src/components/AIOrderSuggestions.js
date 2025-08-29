@@ -3,6 +3,24 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Coffee, Sparkles, ShoppingCart } from "lucide-react";
 import { motion } from "framer-motion";
 
+const headingTemplates = [
+  (item) => `Because you love ${item}…`,
+  (item) => `Your ${item} obsession inspired these picks ✨`,
+  (item) => `Craving something beyond ${item}?`,
+  (item) => `Since you’re a fan of ${item}…`,
+  (item) => `Inspired by your taste for ${item} ☕`,
+  (item) => `People who enjoy ${item} often love these too…`,
+  (item) => `A perfect match for your ${item} cravings 😋`,
+  (item) => `If ${item} is your vibe, you’ll love these 💛`,
+  (item) => `Let’s pair your ${item} love with something new 🍰`,
+  (item) => `Taking your ${item} journey to the next level…`,
+  (item) => `Here’s what complements ${item} perfectly 🌟`,
+  (item) => `Our baristas suggest these with ${item}…`,
+  (item) => `Because life’s better with ${item} and friends 🥂`,
+  (item) => `Since ${item} is your go-to, how about these?`,
+  (item) => `${item} lovers often can’t resist these picks 🔥`,
+];
+
 export default function AIOrderSuggestions({
   orderHistory,
   menuItems,
@@ -12,6 +30,7 @@ export default function AIOrderSuggestions({
   const [suggestions, setSuggestions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [suggestedItems, setSuggestedItems] = useState([]);
+  // Define heading templates
 
   // ✅ Prevent multiple API calls in StrictMode
   const hasFetched = useRef(false);
@@ -33,6 +52,11 @@ export default function AIOrderSuggestions({
     return sorted[dayIndex][0];
   }, [orderHistory]);
 
+  const dynamicHeading = useMemo(() => {
+    if (!topItem) return "Barista’s Picks Just for You";
+    const index = Math.floor(Math.random() * headingTemplates.length);
+    return headingTemplates[index](topItem);
+  }, [topItem]);
   useEffect(() => {
     if (!orderHistory || orderHistory.length === 0) return;
     if (hasFetched.current) return;
@@ -105,9 +129,7 @@ export default function AIOrderSuggestions({
               : "bg-gradient-to-r from-yellow-700 to-orange-500 bg-clip-text text-transparent"
           }`}
         >
-          {topItem
-            ? `Because you love ${topItem}…`
-            : "Barista’s Picks Just for You"}
+          {dynamicHeading}
         </h2>
       </div>
 
