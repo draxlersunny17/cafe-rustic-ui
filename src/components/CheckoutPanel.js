@@ -8,12 +8,16 @@ export default function CheckoutPanel({
   onClose,
   theme,
   pendingOrder,
-  userProfile
+  userProfile,
+  lastOrder,
 }) {
-  const [paymentMethod, setPaymentMethod] = useState("upi");
+  console.log(lastOrder);
+  const [paymentMethod, setPaymentMethod] = useState(
+    lastOrder?.payment_method || "upi"
+  );
   const [tip, setTip] = useState(0);
   const [customTip, setCustomTip] = useState("");
-  const [splitCount, setSplitCount] = useState(1);
+  const [splitCount, setSplitCount] = useState(lastOrder?.split_count || 1);
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
@@ -49,26 +53,31 @@ export default function CheckoutPanel({
   const handleConfirm = () => {
     setLoading(true);
     setSuccess(false);
-  
+
     // Step 1: Processing for 10s
     setTimeout(() => {
       setLoading(false);
       setSuccess(true);
-  
+
       // Step 2: After showing success, generate PDF
       generateReceiptPDF();
-  
+
       // Step 3: Reset + callback (optional after 2-3s)
       setTimeout(() => {
         setSuccess(false);
-        onConfirm({ paymentMethod, tip: appliedTip, splitCount, totalWithGST: grandTotal, sgst, cgst });
+        onConfirm({
+          paymentMethod,
+          tip: appliedTip,
+          splitCount,
+          totalWithGST: grandTotal,
+          sgst,
+          cgst,
+        });
       }, 2000);
-  
     }, 6000); // 5s wait before success
   };
-  
 
-  const generateReceiptPDF = async() => {
+  const generateReceiptPDF = async () => {
     const doc = new jsPDF();
 
     // ===== Logo =====
@@ -90,30 +99,30 @@ export default function CheckoutPanel({
     // Divider
     doc.line(10, 32, 200, 32);
 
-   // ===== Billed To =====
-   doc.setFontSize(12);
-   doc.setFont("helvetica", "bold");
-   doc.text("Billed To:", 14, 40);
- 
-   doc.setFont("helvetica", "normal");
-   doc.text(`${userProfile.name}`, 14, 47);
-   doc.text(`${userProfile.email}`, 14, 54);
-   doc.text(`${userProfile.phone}`, 14, 61);
-   if (userProfile.address) {
-     doc.text(`${userProfile.address}`, 14, 68);
-   }
- 
-   // ===== Invoice Info (top-right corner) =====
-   doc.setFontSize(12);
-   doc.setFont("helvetica", "normal");
-   const invoiceNo = Math.floor(10000 + Math.random() * 90000);
-   const invoiceDate = new Date().toLocaleString();
-   doc.text(`Invoice No. ${invoiceNo}`, 190, 40, { align: "right" });
-   doc.text(`${invoiceDate}`, 190, 47, { align: "right" });
- 
-   // ===== Order Info (below invoice info) =====
-   doc.text(`Payment Mode: ${paymentMethod.toUpperCase()}`, 150, 61);
-   doc.text(`No of Person: ${splitCount}`, 150, 68);
+    // ===== Billed To =====
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Billed To:", 14, 40);
+
+    doc.setFont("helvetica", "normal");
+    doc.text(`${userProfile.name}`, 14, 47);
+    doc.text(`${userProfile.email}`, 14, 54);
+    doc.text(`${userProfile.phone}`, 14, 61);
+    if (userProfile.address) {
+      doc.text(`${userProfile.address}`, 14, 68);
+    }
+
+    // ===== Invoice Info (top-right corner) =====
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "normal");
+    const invoiceNo = Math.floor(10000 + Math.random() * 90000);
+    const invoiceDate = new Date().toLocaleString();
+    doc.text(`Invoice No. ${invoiceNo}`, 190, 40, { align: "right" });
+    doc.text(`${invoiceDate}`, 190, 47, { align: "right" });
+
+    // ===== Order Info (below invoice info) =====
+    doc.text(`Payment Mode: ${paymentMethod.toUpperCase()}`, 150, 61);
+    doc.text(`No of Person: ${splitCount}`, 150, 68);
 
     // ===== Table =====
     const tableData = cart.map((item) => [
@@ -163,15 +172,15 @@ export default function CheckoutPanel({
     doc.text(`Total:`, 150, y + 40);
     doc.text(`Rs. ${grandTotal.toFixed(2)}`, 190, y + 40, { align: "right" });
 
-     // ===== QR Code (bottom left) =====
-  const qrData = `https://cafe-rustic-ui.vercel.app/feedback`;
-  const qrImage = await QRCode.toDataURL(qrData);
+    // ===== QR Code (bottom left) =====
+    const qrData = `https://cafe-rustic-ui.vercel.app/feedback`;
+    const qrImage = await QRCode.toDataURL(qrData);
 
-  doc.addImage(qrImage, "PNG", 14, y + 50, 40, 40); // position + size
+    doc.addImage(qrImage, "PNG", 14, y + 50, 40, 40); // position + size
 
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(9);
-  doc.text("Scan QR to give feedback", 14, y + 95);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    doc.text("Scan QR to give feedback", 14, y + 95);
 
     // ===== Footer =====
     let footerY = y + 55;
@@ -187,24 +196,23 @@ export default function CheckoutPanel({
     });
 
     // ===== Watermark on Every Page =====
-  const pageCount = doc.internal.getNumberOfPages();
-  for (let i = 1; i <= pageCount; i++) {
-    doc.setPage(i);
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(40);
-    doc.setTextColor(150); // gray
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(40);
+      doc.setTextColor(150); // gray
 
-    // Transparency
-    doc.saveGraphicsState();
-    doc.setGState(new doc.GState({ opacity: 0.1 }));
+      // Transparency
+      doc.saveGraphicsState();
+      doc.setGState(new doc.GState({ opacity: 0.1 }));
 
-    // Diagonal watermark
-    doc.text("Powered by Café Rustic", 35, 150, { angle: 45 });
+      // Diagonal watermark
+      doc.text("Powered by Café Rustic", 35, 150, { angle: 45 });
 
-    doc.restoreGraphicsState();
-  }
-
+      doc.restoreGraphicsState();
+    }
 
     // Auto-download
     doc.save(`Receipt_${Date.now()}.pdf`);
@@ -345,28 +353,25 @@ export default function CheckoutPanel({
 
           {/* Buttons */}
 
-
-            <button
-              onClick={handleConfirm}
-              disabled={loading || success}
-              className={`w-full py-3 rounded-2xl font-semibold transition text-white ${
-                success
-                  ? "bg-green-700"
-                  : loading
-                  ? "bg-green-500 animate-pulse"
-                  : "bg-green-600 hover:bg-green-700"
-              }`}
-            >
-              {loading
-                ? "Processing..."
-                : success
-                ? "✔ Payment Successful"
-                : "Confirm & Pay"}
-            </button>
+          <button
+            onClick={handleConfirm}
+            disabled={loading || success}
+            className={`w-full py-3 rounded-2xl font-semibold transition text-white ${
+              success
+                ? "bg-green-700"
+                : loading
+                ? "bg-green-500 animate-pulse"
+                : "bg-green-600 hover:bg-green-700"
+            }`}
+          >
+            {loading
+              ? "Processing..."
+              : success
+              ? "✔ Payment Successful"
+              : "Confirm & Pay"}
+          </button>
         </div>
       </div>
-
-     
     </div>
   );
 }

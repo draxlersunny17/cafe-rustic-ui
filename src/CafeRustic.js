@@ -66,6 +66,9 @@ export default function CafeRustic() {
   const [orderNumber, setOrderNumber] = useState(null);
   const [redeemPoints, setRedeemPoints] = useState(0);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [confirmLastOrderOpen, setConfirmLastOrderOpen] = useState(false);
+  const [useLastOrderPrefs, setUseLastOrderPrefs] = useState(false);
+
   const formatINR = (n) => `₹${n}`;
 
   // ----------- USEEFFECT HOOKS -----------------
@@ -238,11 +241,15 @@ export default function CafeRustic() {
       earned_points: earnedPoints,
     };
 
-    // 👉 Instead of saving directly, hold the order and open CheckoutPanel
     setPendingOrder(newOrder);
 
+    // 👉 Ask confirmation if not from AI
     if (!fromAIChatAssistant) {
-      setCheckoutOpen(true);
+      if (orderHistory.length > 0) {
+        setConfirmLastOrderOpen(true);
+      } else {
+        setCheckoutOpen(true);
+      }
     }
   };
 
@@ -667,6 +674,55 @@ export default function CafeRustic() {
           theme={theme}
         />
 
+        {confirmLastOrderOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div
+              className={`p-6 rounded-2xl shadow-xl max-w-sm w-full text-center transition-colors duration-300
+        ${
+          theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900"
+        }`}
+            >
+              <h3 className="text-lg font-bold mb-4">
+                Use Last Order Preferences?
+              </h3>
+              <p className="text-sm mb-6">
+                Do you want to use the same payment method and split settings
+                from your last order?
+              </p>
+              <div className="flex gap-4 justify-center">
+                <button
+                  onClick={() => {
+                    setUseLastOrderPrefs(true);
+                    setConfirmLastOrderOpen(false);
+                    setCheckoutOpen(true);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    theme === "dark"
+                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      : "bg-green-500 hover:bg-green-600 text-white"
+                  }`}
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={() => {
+                    setUseLastOrderPrefs(false);
+                    setConfirmLastOrderOpen(false);
+                    setCheckoutOpen(true);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-medium transition ${
+                    theme === "dark"
+                      ? "bg-gray-700 hover:bg-gray-600 text-gray-200"
+                      : "bg-gray-300 hover:bg-gray-400 text-gray-800"
+                  }`}
+                >
+                  No
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <AnimatePresence>
           {checkoutOpen && (
             <motion.div
@@ -696,6 +752,13 @@ export default function CafeRustic() {
                   theme={theme}
                   onClose={() => setCheckoutOpen(false)}
                   userProfile={userProfile}
+                  lastOrder={
+                    useLastOrderPrefs && orderHistory.length > 0
+                      ? [...orderHistory].sort(
+                          (a, b) => new Date(b.date) - new Date(a.date)
+                        )[0]
+                      : null
+                  }
                 />
               </motion.div>
             </motion.div>
