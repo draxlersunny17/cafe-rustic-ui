@@ -5,14 +5,14 @@ import QRCode from "qrcode";
 import { formatDateTime } from "../utils/common.js";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { FiSearch } from "react-icons/fi"; 
+import { FiSearch } from "react-icons/fi";
 
 export default function OrderHistory({
   orderHistory,
   formatINR,
   theme,
   onReorder,
-  userProfile
+  userProfile,
 }) {
   const isDark = theme === "dark";
   const [showModal, setShowModal] = useState(false);
@@ -20,14 +20,22 @@ export default function OrderHistory({
   const [showReceipt, setShowReceipt] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchQuery, setSearchQuery] = useState(""); // NEW state for search
-
+  const [selectedMonth, setSelectedMonth] = useState("");
+  
   // --- Filtered Orders ---
-  const filteredOrders = orderHistory.filter(order =>
-    order.items.some(item =>
-      item.name.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  );
-
+  const filteredOrders = orderHistory.filter((order) => {
+    const orderMonth = new Date(order.date).getMonth();
+    // --- Check month filter ---
+    const matchesMonth =
+      selectedMonth === "" || orderMonth === parseInt(selectedMonth);
+    // --- Check search filter ---
+    const matchesSearch = searchQuery.trim()
+      ? order.items.some((item) =>
+          item.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : true; // <-- if no search, always true
+    return matchesMonth && matchesSearch;
+  });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -54,31 +62,31 @@ export default function OrderHistory({
 
   const generateReceiptPDF = async () => {
     const doc = new jsPDF();
-  
+
     // ===== Logo =====
     const logo = "/images/cafelogo.png";
 
     // (x=15, y=5, width=25, height=25)
     doc.addImage(logo, "PNG", 15, 5, 25, 25);
-  
+
     // ===== Header =====
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
     doc.text("Café Rustic", 105, 15, { align: "center" });
-  
+
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text("123 Street, City • +91-9876543210", 105, 22, { align: "center" });
     doc.text("Thank you for dining with us!", 105, 28, { align: "center" });
-  
+
     // Divider
     doc.line(10, 32, 200, 32);
-  
+
     // ===== Billed To =====
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("Billed To:", 14, 40);
-  
+
     doc.setFont("helvetica", "normal");
     doc.text(`${userProfile.name}`, 14, 47);
     doc.text(`${userProfile.email}`, 14, 54);
@@ -86,7 +94,7 @@ export default function OrderHistory({
     if (userProfile.address) {
       doc.text(`${userProfile.address}`, 14, 68);
     }
-  
+
     // ===== Invoice Info (top-right corner) =====
     doc.setFontSize(12);
     doc.setFont("helvetica", "normal");
@@ -94,9 +102,13 @@ export default function OrderHistory({
     const invoiceDate = new Date().toLocaleString();
     doc.text(`Invoice No. ${invoiceNo}`, 190, 40, { align: "right" });
     doc.text(`${invoiceDate}`, 190, 47, { align: "right" });
-  
+
     // ===== Order Info (below invoice info) =====
-    doc.text(`Payment Mode: ${selectedOrder.payment_method.toUpperCase()}`, 150, 61);
+    doc.text(
+      `Payment Mode: ${selectedOrder.payment_method.toUpperCase()}`,
+      150,
+      61
+    );
     doc.text(`No of Person: ${selectedOrder.split_count}`, 150, 68);
     // ===== Table =====
     const tableData = selectedOrder.items.map((item) => [
@@ -114,58 +126,58 @@ export default function OrderHistory({
       styles: { fontSize: 11 },
       headStyles: { fillColor: [41, 128, 185], textColor: 255 },
     });
-  
+
     // ===== Totals Section =====
     let y = doc.lastAutoTable.finalY + 10;
-  
+
     doc.setDrawColor(180); // gray
     doc.setLineWidth(0.3);
     doc.line(10, y - 5, 200, y - 5);
-  
+
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-  
+
     doc.text(`SGST (2.5%): `, 150, y);
     doc.text(`Rs. ${selectedOrder.sgst.toFixed(2)}`, 190, y, {
       align: "right",
     });
-  
+
     doc.text(`CGST (2.5%): `, 150, y + 8);
     doc.text(`Rs. ${selectedOrder.cgst.toFixed(2)}`, 190, y + 8, {
       align: "right",
     });
-  
+
     if (selectedOrder.discount > 0) {
       doc.text(`Discount: `, 150, y + 16);
       doc.text(`Rs. ${selectedOrder.discount.toFixed(2)}`, 190, y + 16, {
         align: "right",
       });
     }
-  
+
     if (selectedOrder.tip > 0) {
       doc.text(`Tip: `, 150, y + 24);
       doc.text(`Rs. ${selectedOrder.tip.toFixed(2)}`, 190, y + 24, {
         align: "right",
       });
     }
-      // ===== Grand Total =====
+    // ===== Grand Total =====
     doc.setFont("helvetica", "bold");
     doc.setFontSize(14);
     doc.text(`Total:`, 150, y + 40);
     doc.text(`Rs. ${selectedOrder.total.toFixed(2)}`, 190, y + 40, {
       align: "right",
     });
-  
+
     // ===== QR Code (bottom left) =====
     const qrData = `https://cafe-rustic-ui.vercel.app/feedback`;
     const qrImage = await QRCode.toDataURL(qrData);
-    
+
     doc.addImage(qrImage, "PNG", 14, y + 50, 40, 40); // position + size
-  
+
     doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
     doc.text("Scan QR to give feedback", 14, y + 95);
-  
+
     // ===== Footer =====
     let footerY = y + 55;
 
@@ -178,7 +190,7 @@ export default function OrderHistory({
     doc.text("We hope to see you again soon!", 105, y + 60, {
       align: "center",
     });
-  
+
     // ===== Watermark on Every Page =====
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
@@ -197,11 +209,11 @@ export default function OrderHistory({
 
       doc.restoreGraphicsState();
     }
-  
-// Auto-download
+
+    // Auto-download
     doc.save(`Receipt_${Date.now()}.pdf`);
   };
-  
+
   const renderOrders = (orders) => (
     <motion.ul
       variants={containerVariants}
@@ -378,25 +390,59 @@ export default function OrderHistory({
           Order History
         </h2>
 
-          {/* --- Search Input --- */}
-          {orderHistory.length > 0 && (
-          <div className="flex items-center justify-center mb-6">
+        {/* --- Search Input --- */}
+        {orderHistory.length > 0 && (
+          <div className="flex items-center justify-center mb-6 gap-4 flex-wrap">
+            {/* Search Input */}
             <div
               className={`flex items-center gap-2 px-4 py-2 rounded-full shadow-sm w-full max-w-md ${
-                isDark ? "bg-gray-800 border border-gray-700" : "bg-white border border-gray-200"
+                isDark
+                  ? "bg-gray-800 border border-gray-700"
+                  : "bg-white border border-gray-200"
               }`}
             >
-              <FiSearch className={`text-lg ${isDark ? "text-gray-400" : "text-gray-500"}`} />
+              <FiSearch
+                className={`text-lg ${
+                  isDark ? "text-gray-400" : "text-gray-500"
+                }`}
+              />
               <input
                 type="text"
                 placeholder="Search by item name..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full bg-transparent focus:outline-none text-sm ${
-                  isDark ? "text-white placeholder-gray-400" : "text-gray-800 placeholder-gray-500"
+                  isDark
+                    ? "text-white placeholder-gray-400"
+                    : "text-gray-800 placeholder-gray-500"
                 }`}
               />
             </div>
+
+            {/* Month Filter */}
+            <select
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              className={`px-4 py-2 rounded-full shadow-sm text-sm ${
+                isDark
+                  ? "bg-gray-800 border border-gray-700 text-white"
+                  : "bg-white border border-gray-200 text-gray-800"
+              }`}
+            >
+              <option value="">All Months</option>
+              <option value="0">January</option>
+              <option value="1">February</option>
+              <option value="2">March</option>
+              <option value="3">April</option>
+              <option value="4">May</option>
+              <option value="5">June</option>
+              <option value="6">July</option>
+              <option value="7">August</option>
+              <option value="8">September</option>
+              <option value="9">October</option>
+              <option value="10">November</option>
+              <option value="11">December</option>
+            </select>
           </div>
         )}
 
@@ -410,18 +456,13 @@ export default function OrderHistory({
           </p>
         ) : (
           <>
-           {(searchQuery.trim() === "" ? orderHistory : filteredOrders).length > 0 ? (
-  renderOrders(
-    searchQuery.trim() === ""
-      ? orderHistory.slice(0, 6)
-      : filteredOrders.slice(0, 6)
-  )
-) : (
-  <p className="text-center text-gray-500 italic mt-4">
-    No results found.
-  </p>
-)}
-
+            {filteredOrders.length > 0 ? (
+              renderOrders(filteredOrders.slice(0, 6))
+            ) : (
+              <p className="text-center text-gray-500 italic mt-4">
+                No results found.
+              </p>
+            )}
 
             {orderHistory.length > 6 && (
               <div className="mt-8 text-center">
@@ -467,9 +508,11 @@ export default function OrderHistory({
                   ✕
                 </button>
               </div>
-               {/* --- Search Bar inside Modal --- */}
-               <div className="flex items-center gap-2 px-4 py-2 rounded-full shadow-sm mb-6 max-w-md mx-auto
-                border border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+              {/* --- Search Bar inside Modal --- */}
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-full shadow-sm mb-6 max-w-md mx-auto
+                border border-gray-200 bg-gray-50 dark:bg-gray-800 dark:border-gray-700"
+              >
                 <FiSearch className="text-gray-400" />
                 <input
                   type="text"
@@ -483,7 +526,9 @@ export default function OrderHistory({
               {filteredOrders.length > 0 ? (
                 renderOrders(filteredOrders)
               ) : (
-                <p className="text-center text-gray-500 italic">No orders match your search.</p>
+                <p className="text-center text-gray-500 italic">
+                  No orders match your search.
+                </p>
               )}
             </motion.div>
           </motion.div>
@@ -560,8 +605,6 @@ export default function OrderHistory({
                   <span>Total</span>
                   <span>{formatINR(selectedOrder.total)}</span>
                 </div>
-
-               
               </div>
 
               {/* --- Footer --- */}
