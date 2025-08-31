@@ -205,7 +205,6 @@ export async function updateUserDetails(userId, updates) {
   }
 }
 
-
 export async function addOrder(order) {
   try {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
@@ -252,16 +251,13 @@ export async function fetchOrdersByUser(userId) {
 
 export async function fetchFeedback() {
   try {
-    const response = await fetch(
-      `${SUPABASE_URL}/rest/v1/feedback?select=*`,
-      {
-        method: "GET",
-        headers: {
-          apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-      }
-    );
+    const response = await fetch(`${SUPABASE_URL}/rest/v1/feedback?select=*`, {
+      method: "GET",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
     if (!response.ok) throw new Error("Failed to fetch feedback");
     const data = await response.json();
 
@@ -307,39 +303,164 @@ export async function askMenuAssistant(messages, menuItems) {
   return res.json(); // { reply }
 }
 
-
 export async function fetchAllOrders() {
   try {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&order=date.desc`, {
-  headers: {
-  apikey: SUPABASE_ANON_KEY,
-  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-  "Content-Type": "application/json",
-  },
-  });
-  if (!res.ok) throw new Error("Failed to fetch orders");
-  const data = await res.json();
-  return data;
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?select=*&order=date.desc`,
+      {
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    if (!res.ok) throw new Error("Failed to fetch orders");
+    const data = await res.json();
+    return data;
   } catch (e) {
-  console.error(e);
-  return [];
+    console.error(e);
+    return [];
   }
-  }
+}
 
-  export async function deleteUser(userId) {
-    try {
+export async function deleteUser(userId) {
+  try {
     const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
-    method: "DELETE",
-    headers: {
-    apikey: SUPABASE_ANON_KEY,
-    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
-    "Content-Type": "application/json",
-    },
+      method: "DELETE",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+      },
     });
     if (!res.ok) throw new Error("Failed to delete user");
     return true;
-    } catch (e) {
+  } catch (e) {
     console.error(e);
     return false;
-    }
-    }
+  }
+}
+
+// supabaseApi.js
+export async function addMenuItem(item) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_items`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(item),
+    });
+    if (!res.ok) throw new Error("Failed to add menu item");
+    const data = await res.json();
+    return data[0];
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+export async function updateMenuItem(id, updates) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_items?id=eq.${id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(updates),
+    });
+    if (!res.ok) throw new Error("Failed to update menu item");
+    const data = await res.json();
+    return data[0];
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+export async function deleteMenuItem(id) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_items?id=eq.${id}`, {
+      method: "DELETE",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    return res.ok;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
+
+export async function addVariant(variant) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_item_variants`, {
+      method: "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(variant),
+    });
+    if (!res.ok) throw new Error("Failed to add variant");
+    const data = await res.json();
+    return data[0];
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+export async function updateVariant(id, updates) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/menu_item_variants?id=eq.${id}`,
+      {
+        method: "PATCH",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+          Prefer: "return=representation",
+        },
+        body: JSON.stringify(updates),
+      }
+    );
+    if (!res.ok) throw new Error("Failed to update variant");
+    const data = await res.json();
+    return data[0];
+  } catch (e) {
+    console.error(e);
+    return null;
+  }
+}
+
+export async function deleteVariant(id) {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/menu_item_variants?id=eq.${id}`,
+      {
+        method: "DELETE",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
+      }
+    );
+    return res.ok;
+  } catch (e) {
+    console.error(e);
+    return false;
+  }
+}
