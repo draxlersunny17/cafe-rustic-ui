@@ -29,7 +29,7 @@ import {
   fetchUserProfile,
   updateUserDetails,
   addOrder,
-  fetchOrders,
+  fetchOrdersByUser,
 } from "./supabaseApi";
 import CheckoutPanel from "./components/CheckoutPanel";
 import AIOrderSuggestions from "./components/AIOrderSuggestions";
@@ -289,7 +289,7 @@ export default function CafeRustic() {
     setRedeemPoints(0);
 
     // ✅ Reload order history
-    const updatedOrders = await fetchOrders(userProfile.id);
+    const updatedOrders = await fetchOrdersByUser(userProfile.id);
     setOrderHistory(updatedOrders);
 
     toast.success(`You earned ${pendingOrder.earned_points} points!`);
@@ -441,7 +441,7 @@ export default function CafeRustic() {
       setTheme(fullProfile.theme || "light");
       setFavorites(fullProfile.favorites || []);
       setLoyaltyPoints(fullProfile.loyalty_points || 0);
-      const orders = await fetchOrders(userId);
+      const orders = await fetchOrdersByUser(userId);
       setOrderHistory(orders);
     }
   };

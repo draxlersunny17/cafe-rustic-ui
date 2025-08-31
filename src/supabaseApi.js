@@ -229,7 +229,7 @@ export async function addOrder(order) {
   }
 }
 
-export async function fetchOrders(userId) {
+export async function fetchOrdersByUser(userId) {
   try {
     const response = await fetch(
       `${SUPABASE_URL}/rest/v1/orders?user_id=eq.${userId}&select=*`,
@@ -307,3 +307,39 @@ export async function askMenuAssistant(messages, menuItems) {
   return res.json(); // { reply }
 }
 
+
+export async function fetchAllOrders() {
+  try {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=*&order=date.desc`, {
+  headers: {
+  apikey: SUPABASE_ANON_KEY,
+  Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+  "Content-Type": "application/json",
+  },
+  });
+  if (!res.ok) throw new Error("Failed to fetch orders");
+  const data = await res.json();
+  return data;
+  } catch (e) {
+  console.error(e);
+  return [];
+  }
+  }
+
+  export async function deleteUser(userId) {
+    try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/users?id=eq.${userId}`, {
+    method: "DELETE",
+    headers: {
+    apikey: SUPABASE_ANON_KEY,
+    Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+    "Content-Type": "application/json",
+    },
+    });
+    if (!res.ok) throw new Error("Failed to delete user");
+    return true;
+    } catch (e) {
+    console.error(e);
+    return false;
+    }
+    }
