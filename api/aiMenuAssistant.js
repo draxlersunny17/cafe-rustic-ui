@@ -12,30 +12,47 @@ export default async function handler(req, res) {
       return res.status(405).json({ error: "Method not allowed" });
     }
 
-    const { messages, menuItems, context, pendingOrder, cart, orderHistory } = req.body || {};
+    const { messages, menuItems, context, pendingOrder, cart, orderHistory } =
+      req.body || {};
 
     if (!Array.isArray(messages) || !Array.isArray(menuItems)) {
       return res.status(400).json({ error: "Invalid input" });
     }
 
-    // ===== Build History Summary =====
-    const historySummary =
-      orderHistory && orderHistory.length > 0
-        ? `User order history:\n${orderHistory
-            .flatMap(o => o.items.map(i => `${i.name} ×${i.qty}`))
-            .join("\n")}`
-        : "No past order history.";
+    // ===== Build History Summary (frequency-based) =====
+    let historySummary = "No past order history.";
+    if (orderHistory && orderHistory.length > 0) {
+      const freqMap = {};
+
+      // Count item frequencies across all orders
+      orderHistory.forEach((order) => {
+        order.items.forEach((i) => {
+          freqMap[i.name] = (freqMap[i.name] || 0) + i.qty;
+        });
+      });
+
+      // Sort by frequency (highest first)
+      const sorted = Object.entries(freqMap).sort((a, b) => b[1] - a[1]);
+
+      // Build summary string
+      historySummary = `User favorites (most ordered items):\n${sorted
+        .map(([name, count]) => `${name} ×${count}`)
+        .join("\n")}`;
+    }
 
     // ===== System Prompt =====
     const systemPrompt = `You are Café Rustic's assistant. 
-Menu (with prices):\n${menuItems.map(i => `${i.name} - ₹${i.price}`).join("\n")}
+Menu (with prices):\n${menuItems
+      .map((i) => `${i.name} - ₹${i.price}`)
+      .join("\n")}
 
 ${historySummary}
 
 Rules:
 1. If the context is "recommendations":
-   - Analyze the user's past order history.
-   - Suggest 2–3 items they might enjoy next, based on their favorites.
+   - Analyze the user's **most frequently ordered items** (from favorites summary).
+   - Mention those favorites explicitly in your reply (e.g., "I see you love Cappuccino...").
+   - Suggest 2–3 items they might enjoy next, based on these recurring favorites.
    - Keep tone short, friendly, and conversational, like a barista.
    - You may upsell (e.g., "Since you like Cappuccino, try Iced Cappuccino") or suggest variety (different flavors/categories).
    - Do NOT output any ###ACTION### block here — just natural text.
@@ -80,18 +97,25 @@ Rules:
         try {
           // Convert messages into plain chat format
           const chatHistory = messages
-            .map(m => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`)
+            .map(
+              (m) => `${m.role === "user" ? "User" : "Assistant"}: ${m.content}`
+            )
             .join("\n");
 
           const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
-          const result = await model.generateContent([systemPrompt, chatHistory]);
+          const result = await model.generateContent([
+            systemPrompt,
+            chatHistory,
+          ]);
           const reply = result.response.text();
 
           return res.status(200).json({ reply, source: "gemini" });
         } catch (geminiErr) {
           console.error("Gemini error:", geminiErr.message);
-          return res.status(500).json({ error: "Both OpenAI and Gemini failed." });
+          return res
+            .status(500)
+            .json({ error: "Both OpenAI and Gemini failed." });
         }
       }
 

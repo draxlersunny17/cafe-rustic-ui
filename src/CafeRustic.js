@@ -773,7 +773,7 @@ export default function CafeRustic() {
             userProfile={userProfile}
             onCheckout={handleCheckout}
             onConfirmPayment={finalizeCheckout}
-            pendingOrder={pendingOrder} // ✅ pass down
+            pendingOrder={pendingOrder}
             cart={cart}
             orderNumber={orderNumber}
           />
