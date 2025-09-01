@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiRepeat, FiChevronDown } from "react-icons/fi";
 import QRCode from "qrcode";
-import { formatDateTime } from "../utils/common.js";
+import { formatDateTime } from "../../utils/common";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { FiSearch } from "react-icons/fi";

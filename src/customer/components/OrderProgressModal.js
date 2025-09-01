@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { launchConfetti } from "./utils/confetti";
+import { launchConfetti } from "../../utils/confetti";
 
 // Images for steps
 const defaultImage = "https://cdn-icons-png.flaticon.com/512/992/992700.png"; // fallback

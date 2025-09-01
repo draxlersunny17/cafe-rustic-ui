@@ -5,7 +5,7 @@ import { Send } from "lucide-react";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import QRCode from "qrcode";
-import OrderProgressModal from "../OrderProgressModal";
+import OrderProgressModal from "./OrderProgressModal";
 import { toast } from "react-toastify";
 
 export default function AIChatAssistant({

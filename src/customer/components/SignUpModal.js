@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
-import { addUser, fetchAllUsers } from "../supabaseApi";
+import { addUser, fetchAllUsers } from "../../service/supabaseApi";
 
 export default function SignUpModal({
   isOpen,

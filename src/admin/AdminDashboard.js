@@ -18,8 +18,8 @@ import {
   BarChart,
   Bar,
 } from "recharts";
-import { Card, CardContent } from "./ui/card";
-import { Button } from "./ui/button";
+import { Card, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
 import {
   ChevronDown,
   ChevronRight,
@@ -48,7 +48,7 @@ import {
   addVariant,
   updateVariant,
   deleteVariant,
-} from "../supabaseApi";
+} from "../service/supabaseApi";
 import { Tooltip as MuiTooltip } from "@mui/material";
 import { Navigate } from "react-router-dom";
 

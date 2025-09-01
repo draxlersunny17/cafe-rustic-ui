@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { SiZomato } from "react-icons/si";
 import { FaGoogle } from "react-icons/fa";
-import { fetchFeedback } from "../supabaseApi";
+import { fetchFeedback } from "../../service/supabaseApi";
 
 export default function Reviews({ theme, onGiveFeedback }) {
   const [feedbacks, setFeedbacks] = useState([]);

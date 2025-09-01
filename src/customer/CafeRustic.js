@@ -11,7 +11,7 @@ import OrderHistory from "./components/OrderHistory";
 import DetailsModal from "./components/DetailsModal";
 import FloatingButtons from "./components/FloatingButtons";
 import CartPanel from "./components/CartPanel";
-import OrderProgressModal from "./OrderProgressModal";
+import OrderProgressModal from "./components/OrderProgressModal";
 import Footer from "./components/Footer";
 import SpecialOffersCarousel from "./components/SpecialOffersCarousel";
 import { FaSun, FaMoon } from "react-icons/fa";
@@ -30,7 +30,7 @@ import {
   updateUserDetails,
   addOrder,
   fetchOrdersByUser,
-} from "./supabaseApi";
+} from "../service/supabaseApi";
 import CheckoutPanel from "./components/CheckoutPanel";
 import AIOrderSuggestions from "./components/AIOrderSuggestions";
 

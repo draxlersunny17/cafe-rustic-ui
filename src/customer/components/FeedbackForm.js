@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Star } from "lucide-react";
-import { addFeedback } from "../supabaseApi";
+import { addFeedback } from "../../service/supabaseApi";
 import { useNavigate } from "react-router-dom";
 
 export default function FeedbackForm({ isModal = false, userProfile = null, theme = "light" }) {

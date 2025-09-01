@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { fetchUserByEmail, fetchUserByPhone } from "../supabaseApi";
+import { fetchUserByEmail, fetchUserByPhone } from "../../service/supabaseApi";
 
 export default function SignInModal({
   isOpen,

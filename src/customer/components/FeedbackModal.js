@@ -1,6 +1,6 @@
 // src/FeedbackModal.js
 import { motion, AnimatePresence } from "framer-motion";
-import FeedbackForm from "./FeedbackForm";
+import FeedbackForm from "../components/FeedbackForm";
 
 export default function FeedbackModal({ isOpen, onClose, theme = "light", userProfile }) {
   return (
