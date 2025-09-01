@@ -1304,33 +1304,42 @@ function MenuPage() {
               >
                 {/* Editable fields */}
                 {Object.keys(newItem).map((field) => (
-                  <td
-                    key={field}
-                    className="px-4 py-3 align-middle border-b border-gray-200"
-                  >
-                    {field === "img" && !editingItemId && item[field] ? (
-                      <ImagePreview src={item[field]} />
-                    ) : editingItemId === item.id ? (
-                      <input
-                        className="border px-2 py-1 rounded w-full text-xs focus:ring-2 focus:ring-blue-300 focus:outline-none"
-                        type={
-                          ["price", "calories"].includes(field)
-                            ? "number"
-                            : "text"
-                        }
-                        value={itemForm[field] ?? ""}
-                        onChange={(e) =>
-                          setItemForm((f) => ({
-                            ...f,
-                            [field]: e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      <TruncatedText text={item[field]} />
-                    )}
-                  </td>
-                ))}
+  <td
+    key={field}
+    className="px-4 py-3 align-middle border-b border-gray-200"
+  >
+    {field === "img" && !editingItemId && item[field] ? (
+      <ImagePreview src={item[field]} />
+    ) : editingItemId === item.id ? (
+      <input
+        className={`border px-2 py-1 rounded text-xs focus:ring-2 focus:ring-blue-300 focus:outline-none
+          ${
+            ["price", "calories"].includes(field)
+              ? "w-20 text-left" // 🔥 Wider input for numbers
+              : "w-full"
+          }`}
+        type={["price", "calories"].includes(field) ? "number" : "text"}
+        min={["price", "calories"].includes(field) ? 0 : undefined}
+        value={["price", "calories"].includes(field) && itemForm[field] === 0
+          ? ""
+          : itemForm[field] ?? ""}
+        onChange={(e) =>
+          setItemForm((f) => ({
+            ...f,
+            [field]:
+              ["price", "calories"].includes(field)
+                ? e.target.value === ""
+                  ? 0
+                  : Math.max(0, +e.target.value)
+                : e.target.value,
+          }))
+        }
+      />
+    ) : (
+      <TruncatedText text={item[field]} />
+    )}
+  </td>
+))}
 
                 {/* Variants */}
                 <td className="px-4 py-3 border-b border-gray-200 align-middle">
