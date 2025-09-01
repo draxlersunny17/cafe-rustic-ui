@@ -32,6 +32,7 @@ import {
   PiggyBank,
   Trash,
   Pencil,
+  Menu, X 
 } from "lucide-react";
 import {
   fetchAllUsers,
@@ -104,6 +105,7 @@ function AdminGuard({ children }) {
 
 // -------- Layout --------
 function Shell({ children }) {
+    const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const nav = [
     { to: "/dashboard/overview", label: "Overview" },
@@ -123,38 +125,72 @@ function Shell({ children }) {
 
       {/* Content wrapper so children sit above background */}
       <div className="relative z-10">
-        {/* Top Navbar */}
-        <header className="sticky top-0 z-30 bg-gray-900/90 backdrop-blur text-white shadow">
-          <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
-            <div className="text-2xl font-bold tracking-wide flex gap-4">
-              <img
-                src="/images/cafelogo.png"
-                alt="Logo"
-                className="w-8 h-8 object-cover"
-              />
-              Café Rustic — Admin
-            </div>
-            <nav className="flex items-center gap-4">
+      {/* 🔥 Top Navbar */}
+      <header className="sticky top-0 z-30 bg-gray-900/90 backdrop-blur text-white shadow">
+        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+          {/* Logo */}
+          <div className="text-2xl font-bold tracking-wide flex gap-4">
+            <img
+              src="/images/cafelogo.png"
+              alt="Logo"
+              className="w-8 h-8 object-cover"
+            />
+            Café Rustic — Admin
+          </div>
+
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-4">
+            {nav.map((n) => (
+              <Link
+                key={n.to}
+                to={n.to}
+                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                  location.pathname === n.to
+                    ? "bg-emerald-500 text-white shadow"
+                    : "hover:bg-gray-700 hover:text-white text-gray-300"
+                }`}
+              >
+                {n.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* Mobile Menu Button */}
+          <button
+            className="md:hidden p-2 rounded-lg hover:bg-gray-700 transition"
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Mobile Nav Dropdown */}
+        {menuOpen && (
+          <div className="md:hidden bg-gray-900 border-t border-gray-700">
+            <nav className="flex flex-col p-4 space-y-2">
               {nav.map((n) => (
-                <Link
-                  key={n.to}
-                  to={n.to}
-                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                    location.pathname === n.to
-                      ? "bg-emerald-500 text-white shadow"
-                      : "hover:bg-gray-700 hover:text-white text-gray-300"
-                  }`}
-                >
-                  {n.label}
-                </Link>
+               <Link
+               key={n.to}
+               to={n.to}
+               className={`block px-4 py-2 rounded-lg font-medium transition-colors ${
+                 location.pathname === n.to
+                   ? "bg-emerald-600/20 text-emerald-400 border-l-4 border-emerald-500" 
+                   : "text-gray-300 hover:bg-gray-700 hover:text-white"
+               }`}
+               onClick={() => setMenuOpen(false)}
+             >
+               {n.label}
+             </Link>
+             
               ))}
             </nav>
           </div>
-        </header>
+        )}
+      </header>
 
-        {/* Page Content */}
-        <main className="mx-auto max-w-7xl p-6 lg:p-10">{children}</main>
-      </div>
+      {/* Page Content */}
+      <main className="mx-auto max-w-7xl p-6 lg:p-10">{children}</main>
+    </div>
     </div>
   );
 }
@@ -1193,75 +1229,78 @@ function MenuPage() {
       )}
 
       {/* Pagination Controls */}
-      <div className="flex justify-between items-center py-3">
-        {/* Rows per page selector */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Show:</span>
-          <select
-            value={rowsPerPage}
-            onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setPage(1);
-            }}
-            className="border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-gray-400"
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 py-3">
+  {/* Rows per page selector */}
+  <div className="flex items-center gap-2 text-sm text-gray-600">
+    <span>Show:</span>
+    <select
+      value={rowsPerPage}
+      onChange={(e) => {
+        setRowsPerPage(Number(e.target.value));
+        setPage(1);
+      }}
+      className="border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-gray-400"
+    >
+      {[5, 10, 50, 100].map((size) => (
+        <option key={size} value={size}>
+          {size}
+        </option>
+      ))}
+    </select>
+    <span className="hidden sm:inline">rows per page</span>
+  </div>
+
+  {/* Pagination controls */}
+  <div className="flex items-center justify-between md:justify-end gap-2 text-sm flex-wrap">
+    <span className="text-gray-600 hidden sm:inline">
+      Page {page} of {totalPages}
+    </span>
+
+    <div className="flex items-center gap-1">
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={page <= 1}
+        onClick={() => setPage(page - 1)}
+        className="hover:bg-gray-100"
+      >
+        Prev
+      </Button>
+
+      {/* Show fewer buttons on mobile */}
+      {Array.from({ length: totalPages }, (_, i) => i + 1)
+        .slice(
+          Math.max(0, page - (window.innerWidth < 640 ? 1 : 3)),
+          Math.min(totalPages, page + (window.innerWidth < 640 ? 1 : 2))
+        )
+        .map((p) => (
+          <Button
+            key={p}
+            size="sm"
+            className={`rounded font-medium transition ${
+              page === p
+                ? "bg-gray-700 text-white shadow-md"
+                : "bg-gray-200 text-black border border-gray-300 hover:bg-gray-300"
+            }`}
+            onClick={() => setPage(p)}
           >
-            {[5, 10, 50, 100].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-          <span>rows per page</span>
-        </div>
+            {p}
+          </Button>
+        ))}
 
-        {/* Pagination controls */}
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-600">
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex items-center gap-1">
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={page <= 1}
-              onClick={() => setPage(page - 1)}
-              className="hover:bg-gray-100"
-            >
-              Prev
-            </Button>
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={page >= totalPages}
+        onClick={() => setPage(page + 1)}
+        className="hover:bg-gray-100"
+      >
+        Next
+      </Button>
+    </div>
+  </div>
+</div>
 
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .slice(
-                Math.max(0, page - 3),
-                Math.min(totalPages, page + 2) // show ~5 pages window
-              )
-              .map((p) => (
-                <Button
-                  key={p}
-                  size="sm"
-                  className={`rounded font-medium transition ${
-                    page === p
-                      ? "bg-gray-700 text-white shadow-md" // Active page: dark button
-                      : "bg-gray-200 text-black border border-gray-300 hover:bg-gray-300"
-                  }`}
-                  onClick={() => setPage(p)}
-                >
-                  {p}
-                </Button>
-              ))}
-
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={page >= totalPages}
-              onClick={() => setPage(page + 1)}
-              className="hover:bg-gray-100"
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      </div>
 
       {/* Menu Table */}
       <div className="overflow-x-auto rounded-xl border bg-white shadow-lg">
