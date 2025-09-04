@@ -619,21 +619,21 @@ export default function MenuPage() {
                             <div className="flex gap-2">
                               <Button
                                 size="icon"
-                                className="bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-full p-1"
+                                className="bg-blue-200 hover:bg-blue-200 text-blue-700 rounded-full p-1"
                                 title="Edit"
                                 onClick={() => startEditVariant(item.id, v)}
                               >
-                                <Pencil size={16} />
+                                <Pencil size={16} className="text-blue-700" />
                               </Button>
                               <Button
                                 size="icon"
-                                className="bg-red-100 hover:bg-red-200 text-red-700 rounded-full p-1"
+                                className="bg-red-200 hover:bg-red-200 text-red-700 rounded-full p-1"
                                 title="Delete"
                                 onClick={() =>
                                   handleDeleteVariantClick(item.id, v.id)
                                 }
                               >
-                                <Trash size={16} />
+                                <Trash size={16} className="text-red-700"/>
                               </Button>
                             </div>
                           </>
