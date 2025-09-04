@@ -19,6 +19,7 @@ export default function MenuPage() {
   const [itemForm, setItemForm] = useState({});
   const [editingVariantId, setEditingVariantId] = useState(null);
   const [variantForm, setVariantForm] = useState({});
+  const [search, setSearch] = useState("");
   const [newItem, setNewItem] = useState({
     name: "",
     price: 0,
@@ -231,8 +232,13 @@ export default function MenuPage() {
     setConfirmVariantDelete({ open: false, itemId: null, variantId: null });
   };
 
-  const totalPages = Math.ceil(menu.length / rowsPerPage);
-  const paginatedData = menu.slice(
+  const filteredMenu = menu.filter((item) =>
+    item.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+  const totalPages = Math.ceil(filteredMenu.length / rowsPerPage);
+
+  const paginatedData = filteredMenu.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
@@ -394,23 +400,38 @@ export default function MenuPage() {
       {/* Pagination Controls */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 py-3">
         {/* Rows per page selector */}
-        <div className="flex items-center gap-2 text-sm text-gray-600">
-          <span>Show:</span>
-          <select
-            value={rowsPerPage}
+        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 w-1/2">
+          {/* Rows per page */}
+          <div className="flex items-center gap-2">
+            <span>Show:</span>
+            <select
+              value={rowsPerPage}
+              onChange={(e) => {
+                setRowsPerPage(Number(e.target.value));
+                setPage(1);
+              }}
+              className="border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-gray-400"
+            >
+              {[5, 10, 50, 100].map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+            <span className="hidden sm:inline">rows per page</span>
+          </div>
+
+          {/* Search box */}
+          <input
+            type="text"
+            placeholder="🔍 Search items..."
+            value={search}
             onChange={(e) => {
-              setRowsPerPage(Number(e.target.value));
-              setPage(1);
+              setSearch(e.target.value);
+              setPage(1); // reset to first page when searching
             }}
-            className="border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-gray-400"
-          >
-            {[5, 10, 50, 100].map((size) => (
-              <option key={size} value={size}>
-                {size}
-              </option>
-            ))}
-          </select>
-          <span className="hidden sm:inline">rows per page</span>
+            className="border px-3 py-1 rounded-lg text-sm focus:ring-2 focus:ring-blue-400 flex-1 min-w-[180px]"
+          />
         </div>
 
         {/* Pagination controls */}
@@ -440,10 +461,11 @@ export default function MenuPage() {
                 <Button
                   key={p}
                   size="sm"
-                  className={`rounded font-medium transition ${
+                  variant="ghost"
+                  className={`rounded font-semibold transition-all ${
                     page === p
-                      ? "bg-gray-700 text-white shadow-md"
-                      : "bg-gray-200 text-black border border-gray-300 hover:bg-gray-300"
+                      ? "bg-gray-800 !text-white shadow-md border border-gray-800"
+                      : "bg-gray-200 !text-black border border-gray-300 hover:bg-gray-300"
                   }`}
                   onClick={() => setPage(p)}
                 >
@@ -633,7 +655,7 @@ export default function MenuPage() {
                                   handleDeleteVariantClick(item.id, v.id)
                                 }
                               >
-                                <Trash size={16} className="text-red-700"/>
+                                <Trash size={16} className="text-red-700" />
                               </Button>
                             </div>
                           </>
@@ -704,7 +726,7 @@ export default function MenuPage() {
                 </td>
               </tr>
             ))}
-            {menu.length === 0 && (
+            {filteredMenu.length === 0 && (
               <tr>
                 <td colSpan={12} className="text-center py-4 text-gray-500">
                   No menu items yet.
