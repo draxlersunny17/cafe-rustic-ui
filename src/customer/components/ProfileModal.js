@@ -1,5 +1,6 @@
-import React from "react";
-import { Mail, Phone, Cake, User, Gift } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Mail, Phone, Cake, User, Gift, Star } from "lucide-react";
+import { fetchSpecialOffers } from "../../service/supabaseApi";
 
 export default function ProfilePanel({
   open,
@@ -20,6 +21,42 @@ export default function ProfilePanel({
     { name: "Platinum", minPoints: 10000, color: "bg-purple-600" },
   ];
 
+  // Special offers state
+  const [offers, setOffers] = useState([]);
+  const [offersLoading, setOffersLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadOffers() {
+      if (!userProfile) return;
+      const today = new Date();
+      const isBirthday =
+        userProfile?.dob &&
+        new Date(userProfile.dob).getDate() === today.getDate() &&
+        new Date(userProfile.dob).getMonth() === today.getMonth();
+      const loyaltyPoints = loyaltyPointsRaw();
+      const currentTier =
+        loyaltyTiers
+          .slice()
+          .reverse()
+          .find((tier) => loyaltyPoints >= tier.minPoints) || loyaltyTiers[0];
+      const fetched = await fetchSpecialOffers({
+        userTier: currentTier.name,
+        isBirthday,
+      });
+      setOffers(fetched);
+      setOffersLoading(false);
+    }
+    loadOffers();
+    // eslint-disable-next-line
+  }, [userProfile]);
+
+  // Helper to get loyalty points from prop or profile
+  function loyaltyPointsRaw() {
+    if (typeof loyaltyPoints === "number") return loyaltyPoints;
+    if (userProfile?.loyaltyPoints) return userProfile.loyaltyPoints;
+    return 0;
+  }
+
   const firstName = userProfile?.name ? userProfile.name.split(" ")[0] : "";
 
   // Determine current tier
@@ -27,7 +64,7 @@ export default function ProfilePanel({
     loyaltyTiers
       .slice()
       .reverse()
-      .find((tier) => loyaltyPoints >= tier.minPoints) || loyaltyTiers[0];
+      .find((tier) => loyaltyPointsRaw() >= tier.minPoints) || loyaltyTiers[0];
 
   // Determine next tier
   const nextTier = loyaltyTiers.find(
@@ -37,7 +74,7 @@ export default function ProfilePanel({
   // Progress to next tier
   const progressToNextTier = nextTier
     ? Math.min(
-        ((loyaltyPoints - currentTier.minPoints) /
+        ((loyaltyPointsRaw() - currentTier.minPoints) /
           (nextTier.minPoints - currentTier.minPoints)) *
           100,
         100
@@ -89,6 +126,14 @@ export default function ProfilePanel({
 
           {/* Content */}
           <div className="flex-1 overflow-auto p-4 space-y-4">
+            {/* Birthday Greeting */}
+            {userProfile && isBirthday && (
+              <div className={`flex items-center justify-center p-3 rounded-lg font-bold text-lg gap-2 ${theme === "dark" ? "bg-pink-900 text-pink-200" : "bg-pink-100 text-pink-800"}`}>
+                <span role="img" aria-label="birthday">🎉</span>
+                Happy Birthday, {firstName}!
+               
+              </div>
+            )}
             {userProfile ? (
               <>
                 {/* Profile Info with Tier Badge */}
@@ -157,22 +202,44 @@ export default function ProfilePanel({
                   </div>
                 </div>
 
-                {/* 🎂 Birthday Reward */}
-                {isBirthday && (
-                  <div
-                    className={`p-4 rounded-lg flex items-center space-x-3 font-semibold shadow ${
-                      theme === "dark"
-                        ? "bg-pink-900 text-pink-200"
-                        : "bg-pink-100 text-pink-800"
-                    }`}
-                  >
-                    <Gift className="w-6 h-6 text-pink-500" />
-                    <p>
-                      Happy Birthday, {firstName}! 🎉 Enjoy a free coffee on us
-                      today ☕
-                    </p>
-                  </div>
-                )}
+
+                {/* Special Offers Section - Only Tier and Birthday Offers */}
+                <div className="space-y-2">
+                  {offersLoading ? (
+                    <div className="text-center text-gray-400 text-sm">Loading your special offers...</div>
+                  ) : (
+                    <>                
+                      {/* Tier and Birthday Offers Only */}
+                      {offers
+                        .filter((offer) => offer.type === "tier" || offer.type === "birthday")
+                        .map((offer) => (
+                          <div
+                            key={offer.id}
+                            className={`p-4 rounded-lg flex items-center space-x-3 font-semibold shadow ${
+                              offer.type === "birthday"
+                                ? theme === "dark"
+                                  ? "bg-pink-900 text-pink-200"
+                                  : "bg-pink-100 text-pink-800"
+                                : theme === "dark"
+                                ? "bg-yellow-900 text-yellow-200"
+                                : "bg-yellow-100 text-yellow-800"
+                            }`}
+                          >
+                            {offer.type === "birthday" ? (
+                              <Gift className="w-6 h-6 text-pink-500" />
+                            ) : (
+                              <Star className="w-6 h-6 text-yellow-400" />
+                            )}
+                            <div>
+                              <div className="font-bold">
+                                {offer.title}</div>
+                              <div className="text-xs font-normal mt-1">{offer.description}</div>
+                            </div>
+                          </div>
+                        ))}
+                    </>
+                  )}
+                </div>
 
                 {/* Loyalty Progress */}
                 <div

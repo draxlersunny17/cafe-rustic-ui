@@ -467,3 +467,111 @@ export async function deleteVariant(id) {
     return false;
   }
 }
+
+export async function fetchSpecialOffers({ userTier, isBirthday }) {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/offers?select=*&order=updated_at.desc,created_at.desc`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) throw new Error("Failed to fetch special offers");
+
+    const offers = await response.json();
+    const today = new Date().toISOString().slice(0, 10);
+
+    // ✅ filter
+    const filtered = offers.filter((offer) => {
+      const valid = today >= offer.valid_from && today <= offer.valid_to;
+      if (!valid) return false;
+
+      if (offer.type === "birthday" && isBirthday) return true;
+      if (offer.type === "tier" && offer.eligibility?.tier === userTier) return true;
+      if (offer.type === "general") return true;
+
+      return false;
+    });
+
+    return filtered;
+  } catch (e) {
+    console.error("Error fetching special offers:", e);
+    return [];
+  }
+}
+
+export async function fetchAllOffers() {
+  try {
+    const response = await fetch(
+      `${SUPABASE_URL}/rest/v1/offers?select=*&order=updated_at.desc,created_at.desc`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) throw new Error("Failed to fetch offers");
+
+    return await response.json();
+  } catch (e) {
+    console.error("Error fetching offers:", e);
+    return [];
+  }
+}
+
+
+
+
+export async function addOrUpdateSpecialOffer(offer) {
+  try {
+    const url = offer.id
+      ? `${SUPABASE_URL}/rest/v1/offers?id=eq.${offer.id}`
+      : `${SUPABASE_URL}/rest/v1/offers`;
+
+    const res = await fetch(url, {
+      method: offer.id ? "PATCH" : "POST",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation",
+      },
+      body: JSON.stringify(offer),
+    });
+
+    if (!res.ok) throw new Error("Failed to add/update offer");
+
+    const data = await res.json();
+    return offer.id ? data[0] : data[0]; // return inserted/updated row
+  } catch (e) {
+    console.error("Error adding/updating offer:", e);
+    return null;
+  }
+}
+
+export async function deleteSpecialOffer(id) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/offers?id=eq.${id}`, {
+      method: "DELETE",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+    });
+    return res.ok;
+  } catch (e) {
+    console.error("Error deleting offer:", e);
+    return false;
+  }
+}
+

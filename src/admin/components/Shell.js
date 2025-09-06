@@ -9,6 +9,7 @@ export default function Shell({ children }) {
     { to: "/dashboard/overview", label: "Overview" },
     { to: "/dashboard/users", label: "Users" },
     { to: "/dashboard/menu", label: "Menu" },
+    { to: "/dashboard/special-offers", label: "Offers" },
   ];
 
   return (
