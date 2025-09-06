@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { Button } from "../../ui/button";
 import { Trash, Pencil } from "lucide-react";
 import {
@@ -12,8 +12,11 @@ import {
 } from "../../service/supabaseApi";
 import MuiTooltip from "@mui/material/Tooltip";
 import ImagePreview from "../components/ImagePreview";
+import { ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 
 export default function MenuPage() {
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
+
   const [menu, setMenu] = useState([]);
   const [editingItemId, setEditingItemId] = useState(null);
   const [itemForm, setItemForm] = useState({});
@@ -48,7 +51,10 @@ export default function MenuPage() {
 
   const startEditItem = (item) => {
     setEditingItemId(item.id);
-    setItemForm({ ...item, is_chef_recommended: item.is_chef_recommended || false });
+    setItemForm({
+      ...item,
+      is_chef_recommended: item.is_chef_recommended || false,
+    });
   };
 
   const saveItem = async (id) => {
@@ -234,16 +240,51 @@ export default function MenuPage() {
     setConfirmVariantDelete({ open: false, itemId: null, variantId: null });
   };
 
+  // 1. Filter
   const filteredMenu = menu.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  // 2. Sort (before pagination)
+  const sortedMenu = useMemo(() => {
+    let sortable = [...filteredMenu];
+    if (sortConfig.key) {
+      sortable.sort((a, b) => {
+        const valA = a[sortConfig.key] ?? "";
+        const valB = b[sortConfig.key] ?? "";
+
+        if (typeof valA === "number" && typeof valB === "number") {
+          return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+        }
+
+        return sortConfig.direction === "asc"
+          ? String(valA).localeCompare(String(valB))
+          : String(valB).localeCompare(String(valA));
+      });
+    }
+    return sortable;
+  }, [filteredMenu, sortConfig]);
+
+  // 3. Total pages (based on filtered list, not paginated)
   const totalPages = Math.ceil(filteredMenu.length / rowsPerPage);
 
-  const paginatedData = filteredMenu.slice(
+  // 4. Paginate (after sorting)
+  const paginatedData = sortedMenu.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
+
+  const requestSort = (key) => {
+    setSortConfig((prev) => {
+      if (prev.key === key) {
+        return {
+          key,
+          direction: prev.direction === "asc" ? "desc" : "asc",
+        };
+      }
+      return { key, direction: "asc" };
+    });
+  };
 
   const TruncatedText = ({ text, max = 40 }) => (
     <MuiTooltip title={text || ""} arrow>
@@ -319,7 +360,12 @@ export default function MenuPage() {
                 <input
                   type="checkbox"
                   checked={newItem.is_chef_recommended}
-                  onChange={e => setNewItem(prev => ({ ...prev, is_chef_recommended: e.target.checked }))}
+                  onChange={(e) =>
+                    setNewItem((prev) => ({
+                      ...prev,
+                      is_chef_recommended: e.target.checked,
+                    }))
+                  }
                 />
                 Chef's Recommendation
               </label>
@@ -504,32 +550,47 @@ export default function MenuPage() {
           <thead className="bg-gradient-to-r from-gray-100 to-gray-200 text-gray-700 sticky top-0 z-20">
             <tr>
               {[
-                "Name",
-                "Price",
-                "Category",
-                "Description",
-                "Short Description",
-                "Calories",
-                "Ingredients",
-                "Prep",
-                "Origin",
-                "Image",
-                "Chef Recommended",
-                "Variants",
-                "Actions",
-              ].map((col) => (
+                { label: "Name", key: "name" },
+                { label: "Price", key: "price" },
+                { label: "Category", key: "category" },
+                { label: "Description", key: "desc" },
+                { label: "Short Description", key: "short_desc" },
+                { label: "Calories", key: "calories" },
+                { label: "Ingredients", key: "ingredients" },
+                { label: "Prep", key: "prep_time" },
+                { label: "Origin", key: "origin" },
+                { label: "Image", key: "img" },
+                { label: "Recommended", key: "is_chef_recommended" },
+                { label: "Variants", key: null }, // skip sorting
+                { label: "Actions", key: null }, // skip sorting
+              ].map(({ label, key }) => (
                 <th
-                  key={col}
-                  className={`px-4 py-3 text-left font-semibold border-b border-gray-300 ${
-                    col === "Actions" ? "sticky right-0 bg-gray-200 z-30" : ""
+                  key={label}
+                  onClick={key ? () => requestSort(key) : undefined}
+                  className={`px-4 py-3 text-left font-semibold border-b border-gray-300 cursor-pointer select-none ${
+                    label === "Actions" ? "sticky right-0 bg-gray-200 z-30" : ""
                   }`}
-                  style={col === "Actions" ? { minWidth: "120px" } : {}}
+                  style={label === "Actions" ? { minWidth: "120px" } : {}}
                 >
-                  {col}
+                  <div className="flex items-center gap-1">
+                    {label}
+                    {key ? (
+                      sortConfig.key === key ? (
+                        sortConfig.direction === "asc" ? (
+                          <ArrowUp size={14} />
+                        ) : (
+                          <ArrowDown size={14} />
+                        )
+                      ) : (
+                        <ArrowUpDown size={14} />
+                      )
+                    ) : null}
+                  </div>
                 </th>
               ))}
             </tr>
           </thead>
+
           <tbody>
             {paginatedData.map((item, idx) => (
               <tr
@@ -539,72 +600,78 @@ export default function MenuPage() {
                 } hover:bg-gray-100 transition`}
               >
                 {/* Editable fields */}
-               {Object.keys(newItem).map((field) =>
-  field === "is_chef_recommended" ? (
-    <td
-      key={field}
-      className="px-4 py-3 align-middle border-b border-gray-200"
-    >
-      {editingItemId === item.id ? (
-        <input
-          type="checkbox"
-          checked={!!itemForm.is_chef_recommended}
-          onChange={(e) =>
-            setItemForm((f) => ({
-              ...f,
-              is_chef_recommended: e.target.checked,
-            }))
-          }
-        />
-      ) : (
-        <span>
-          {item.is_chef_recommended ? "✅ Chef's Pick" : "—"}
-        </span>
-      )}
-    </td>
-  ) : (
-    // 🔥 keep your existing logic for other fields
-    <td
-      key={field}
-      className="px-4 py-3 align-middle border-b border-gray-200"
-    >
-      {field === "img" && !editingItemId && item[field] ? (
-        <ImagePreview src={item[field]} />
-      ) : editingItemId === item.id ? (
-        <input
-          className={`border px-2 py-1 rounded text-xs focus:ring-2 focus:ring-blue-300 focus:outline-none
+                {Object.keys(newItem).map((field) =>
+                  field === "is_chef_recommended" ? (
+                    <td
+                      key={field}
+                      className="px-4 py-3 align-middle border-b border-gray-200"
+                    >
+                      {editingItemId === item.id ? (
+                        <input
+                          type="checkbox"
+                          checked={!!itemForm.is_chef_recommended}
+                          onChange={(e) =>
+                            setItemForm((f) => ({
+                              ...f,
+                              is_chef_recommended: e.target.checked,
+                            }))
+                          }
+                        />
+                      ) : (
+                        <span>
+                          {item.is_chef_recommended ? "✅ Chef's Pick" : "—"}
+                        </span>
+                      )}
+                    </td>
+                  ) : (
+                    // 🔥 keep your existing logic for other fields
+                    <td
+                      key={field}
+                      className="px-4 py-3 align-middle border-b border-gray-200"
+                    >
+                      {field === "img" && !editingItemId && item[field] ? (
+                        <ImagePreview src={item[field]} />
+                      ) : editingItemId === item.id ? (
+                        <input
+                          className={`border px-2 py-1 rounded text-xs focus:ring-2 focus:ring-blue-300 focus:outline-none
             ${
               ["price", "calories"].includes(field)
                 ? "w-20 text-left"
                 : "w-full"
             }`}
-          type={
-            ["price", "calories"].includes(field) ? "number" : "text"
-          }
-          min={["price", "calories"].includes(field) ? 0 : undefined}
-          value={
-            ["price", "calories"].includes(field) && itemForm[field] === 0
-              ? ""
-              : itemForm[field] ?? ""
-          }
-          onChange={(e) =>
-            setItemForm((f) => ({
-              ...f,
-              [field]: ["price", "calories"].includes(field)
-                ? e.target.value === ""
-                  ? 0
-                  : Math.max(0, +e.target.value)
-                : e.target.value,
-            }))
-          }
-        />
-      ) : (
-        <TruncatedText text={item[field]} />
-      )}
-    </td>
-  )
-)}
-
+                          type={
+                            ["price", "calories"].includes(field)
+                              ? "number"
+                              : "text"
+                          }
+                          min={
+                            ["price", "calories"].includes(field)
+                              ? 0
+                              : undefined
+                          }
+                          value={
+                            ["price", "calories"].includes(field) &&
+                            itemForm[field] === 0
+                              ? ""
+                              : itemForm[field] ?? ""
+                          }
+                          onChange={(e) =>
+                            setItemForm((f) => ({
+                              ...f,
+                              [field]: ["price", "calories"].includes(field)
+                                ? e.target.value === ""
+                                  ? 0
+                                  : Math.max(0, +e.target.value)
+                                : e.target.value,
+                            }))
+                          }
+                        />
+                      ) : (
+                        <TruncatedText text={item[field]} />
+                      )}
+                    </td>
+                  )
+                )}
 
                 {/* Variants */}
                 <td className="px-4 py-3 border-b border-gray-200 align-middle">
