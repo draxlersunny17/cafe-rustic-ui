@@ -503,10 +503,6 @@ export default function MenuPage() {
             Showing {start}–{end} of {totalItems} items
           </span>
 
-          <span className="px-2 py-1 rounded-md bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium border border-gray-300 hidden sm:inline">
-            Page {page} of {totalPages}
-          </span>
-
           <div className="flex items-center gap-1">
             <Button
               size="sm"
