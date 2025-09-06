@@ -366,6 +366,9 @@ export async function addMenuItem(item) {
 
 export async function updateMenuItem(id, updates) {
   try {
+    // 🔥 Remove menu_item_variants since it's not a real column
+    const { menu_item_variants, ...validUpdates } = updates;
+
     const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_items?id=eq.${id}`, {
       method: "PATCH",
       headers: {
@@ -374,7 +377,7 @@ export async function updateMenuItem(id, updates) {
         "Content-Type": "application/json",
         Prefer: "return=representation",
       },
-      body: JSON.stringify(updates),
+      body: JSON.stringify(validUpdates),
     });
     if (!res.ok) throw new Error("Failed to update menu item");
     const data = await res.json();

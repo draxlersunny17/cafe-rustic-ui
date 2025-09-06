@@ -30,6 +30,7 @@ import {
   updateUserDetails,
   addOrder,
   fetchOrdersByUser,
+  fetchAllOrders,
 } from "../service/supabaseApi";
 import CheckoutPanel from "./components/CheckoutPanel";
 import AIOrderSuggestions from "./components/AIOrderSuggestions";
@@ -68,6 +69,7 @@ export default function CafeRustic() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [confirmLastOrderOpen, setConfirmLastOrderOpen] = useState(false);
   const [useLastOrderPrefs, setUseLastOrderPrefs] = useState(false);
+  const [allOrders, setAllOrders] = useState([]);
 
   const formatINR = (n) => `₹${n}`;
 
@@ -112,6 +114,18 @@ export default function CafeRustic() {
     restoreUser();
   }, []);
 
+  useEffect(() => {
+    const getAllOrders = async () => {
+      try {
+        const orders = await fetchAllOrders();
+        setAllOrders(orders || []);
+      } catch (error) {
+        console.error("Failed to fetch all orders:", error);
+      }
+    };
+    getAllOrders();
+  }, []);
+
   // ----------- MEMOIZED VALUES -----------------
   const cartCount = useMemo(
     () => cart.reduce((s, it) => s + it.qty, 0),
@@ -144,6 +158,25 @@ export default function CafeRustic() {
       );
     });
   }, [menuItems, category, query, favorites]);
+  
+  const highlyOrderedItems = useMemo(() => {
+    if (!allOrders.length || !menuItems.length) return [];
+    const itemCount = {};
+    allOrders.forEach((order) => {
+      (order.items || []).forEach((it) => {
+        // Remove variant info if present
+        const baseId = typeof it.id === "string" ? it.id.split("-")[0] : it.id;
+        itemCount[baseId] = (itemCount[baseId] || 0) + (it.qty || 1);
+      });
+    });
+    // Sort by count desc, get top 6
+    const sorted = Object.entries(itemCount)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .map(([id]) => menuItems.find((m) => String(m.id) === String(id)))
+      .filter(Boolean);
+    return sorted;
+  }, [allOrders, menuItems]);
 
   // ----------- FUNCTIONS -----------------
   const toggleTheme = async () => {
@@ -565,6 +598,7 @@ export default function CafeRustic() {
             setSelectedItem={setSelectedItem}
             handleDownloadPDF={handleDownloadPDF}
             setVariantItem={setVariantItem}
+            highlyOrderedItems={highlyOrderedItems}
           />
         )}
 

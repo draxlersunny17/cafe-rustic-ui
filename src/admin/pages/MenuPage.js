@@ -31,6 +31,7 @@ export default function MenuPage() {
     prep: "",
     origin: "",
     img: "",
+    is_chef_recommended: false,
   });
   const [busy, setBusy] = useState(false);
 
@@ -47,7 +48,7 @@ export default function MenuPage() {
 
   const startEditItem = (item) => {
     setEditingItemId(item.id);
-    setItemForm({ ...item });
+    setItemForm({ ...item, is_chef_recommended: item.is_chef_recommended || false });
   };
 
   const saveItem = async (id) => {
@@ -81,6 +82,7 @@ export default function MenuPage() {
         prep: "",
         origin: "",
         img: "",
+        is_chef_recommended: false,
       });
     }
     setBusy(false);
@@ -287,30 +289,40 @@ export default function MenuPage() {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
-              {Object.keys(newItem).map((field) => (
-                <input
-                  key={field}
-                  placeholder={toTitleCase(field)}
-                  className="border px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-300"
-                  type={
-                    ["price", "calories"].includes(field) ? "number" : "text"
-                  }
-                  min={["price", "calories"].includes(field) ? 0 : undefined} // 🔥 Prevent negatives
-                  value={
-                    ["price", "calories"].includes(field) &&
-                    newItem[field] === 0
-                      ? "" // 🔥 Blank if 0
-                      : newItem[field]
-                  }
-                  onChange={(e) => {
-                    let value = e.target.value;
-                    if (["price", "calories"].includes(field)) {
-                      value = value === "" ? 0 : Math.max(0, +value); // 🔥 Ensure >= 0
+              {Object.keys(newItem)
+                .filter((field) => field !== "is_chef_recommended")
+                .map((field) => (
+                  <input
+                    key={field}
+                    placeholder={toTitleCase(field)}
+                    className="border px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-300"
+                    type={
+                      ["price", "calories"].includes(field) ? "number" : "text"
                     }
-                    setNewItem((n) => ({ ...n, [field]: value }));
-                  }}
+                    min={["price", "calories"].includes(field) ? 0 : undefined} // 🔥 Prevent negatives
+                    value={
+                      ["price", "calories"].includes(field) &&
+                      (newItem[field] === null || newItem[field] === undefined)
+                        ? ""
+                        : newItem[field]
+                    }
+                    onChange={(e) => {
+                      let value = e.target.value;
+                      if (["price", "calories"].includes(field)) {
+                        value = value === "" ? 0 : Math.max(0, +value); // 🔥 Ensure >= 0
+                      }
+                      setNewItem((n) => ({ ...n, [field]: value }));
+                    }}
+                  />
+                ))}
+              <label className="flex items-center gap-2 col-span-full">
+                <input
+                  type="checkbox"
+                  checked={newItem.is_chef_recommended}
+                  onChange={e => setNewItem(prev => ({ ...prev, is_chef_recommended: e.target.checked }))}
                 />
-              ))}
+                Chef's Recommendation
+              </label>
             </div>
 
             {/* Modal Buttons */}
@@ -496,12 +508,13 @@ export default function MenuPage() {
                 "Price",
                 "Category",
                 "Description",
-                "Short Desc",
+                "Short Description",
                 "Calories",
                 "Ingredients",
                 "Prep",
                 "Origin",
                 "Image",
+                "Chef Recommended",
                 "Variants",
                 "Actions",
               ].map((col) => (
@@ -521,56 +534,77 @@ export default function MenuPage() {
             {paginatedData.map((item, idx) => (
               <tr
                 key={item.id}
-                className={`${
+                className={`$${
                   idx % 2 === 0 ? "bg-white" : "bg-gray-50"
                 } hover:bg-gray-100 transition`}
               >
                 {/* Editable fields */}
-                {Object.keys(newItem).map((field) => (
-                  <td
-                    key={field}
-                    className="px-4 py-3 align-middle border-b border-gray-200"
-                  >
-                    {field === "img" && !editingItemId && item[field] ? (
-                      <ImagePreview src={item[field]} />
-                    ) : editingItemId === item.id ? (
-                      <input
-                        className={`border px-2 py-1 rounded text-xs focus:ring-2 focus:ring-blue-300 focus:outline-none
+               {Object.keys(newItem).map((field) =>
+  field === "is_chef_recommended" ? (
+    <td
+      key={field}
+      className="px-4 py-3 align-middle border-b border-gray-200"
+    >
+      {editingItemId === item.id ? (
+        <input
+          type="checkbox"
+          checked={!!itemForm.is_chef_recommended}
+          onChange={(e) =>
+            setItemForm((f) => ({
+              ...f,
+              is_chef_recommended: e.target.checked,
+            }))
+          }
+        />
+      ) : (
+        <span>
+          {item.is_chef_recommended ? "✅ Chef's Pick" : "—"}
+        </span>
+      )}
+    </td>
+  ) : (
+    // 🔥 keep your existing logic for other fields
+    <td
+      key={field}
+      className="px-4 py-3 align-middle border-b border-gray-200"
+    >
+      {field === "img" && !editingItemId && item[field] ? (
+        <ImagePreview src={item[field]} />
+      ) : editingItemId === item.id ? (
+        <input
+          className={`border px-2 py-1 rounded text-xs focus:ring-2 focus:ring-blue-300 focus:outline-none
             ${
               ["price", "calories"].includes(field)
-                ? "w-20 text-left" // 🔥 Wider input for numbers
+                ? "w-20 text-left"
                 : "w-full"
             }`}
-                        type={
-                          ["price", "calories"].includes(field)
-                            ? "number"
-                            : "text"
-                        }
-                        min={
-                          ["price", "calories"].includes(field) ? 0 : undefined
-                        }
-                        value={
-                          ["price", "calories"].includes(field) &&
-                          itemForm[field] === 0
-                            ? ""
-                            : itemForm[field] ?? ""
-                        }
-                        onChange={(e) =>
-                          setItemForm((f) => ({
-                            ...f,
-                            [field]: ["price", "calories"].includes(field)
-                              ? e.target.value === ""
-                                ? 0
-                                : Math.max(0, +e.target.value)
-                              : e.target.value,
-                          }))
-                        }
-                      />
-                    ) : (
-                      <TruncatedText text={item[field]} />
-                    )}
-                  </td>
-                ))}
+          type={
+            ["price", "calories"].includes(field) ? "number" : "text"
+          }
+          min={["price", "calories"].includes(field) ? 0 : undefined}
+          value={
+            ["price", "calories"].includes(field) && itemForm[field] === 0
+              ? ""
+              : itemForm[field] ?? ""
+          }
+          onChange={(e) =>
+            setItemForm((f) => ({
+              ...f,
+              [field]: ["price", "calories"].includes(field)
+                ? e.target.value === ""
+                  ? 0
+                  : Math.max(0, +e.target.value)
+                : e.target.value,
+            }))
+          }
+        />
+      ) : (
+        <TruncatedText text={item[field]} />
+      )}
+    </td>
+  )
+)}
+
 
                 {/* Variants */}
                 <td className="px-4 py-3 border-b border-gray-200 align-middle">
