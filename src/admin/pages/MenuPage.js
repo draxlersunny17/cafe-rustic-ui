@@ -304,6 +304,11 @@ export default function MenuPage() {
 
   const [addMenuOpen, setAddMenuOpen] = useState(false);
 
+  const totalItems = filteredMenu.length;
+
+  const start = (page - 1) * rowsPerPage + 1;
+  const end = Math.min(page * rowsPerPage, totalItems);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -494,7 +499,11 @@ export default function MenuPage() {
 
         {/* Pagination controls */}
         <div className="flex items-center justify-between md:justify-end gap-2 text-sm flex-wrap">
-          <span className="text-gray-600 hidden sm:inline">
+          <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-medium shadow-sm">
+            Showing {start}–{end} of {totalItems} items
+          </span>
+
+          <span className="px-2 py-1 rounded-md bg-gray-100 text-gray-700 text-xs sm:text-sm font-medium border border-gray-300 hidden sm:inline">
             Page {page} of {totalPages}
           </span>
 
