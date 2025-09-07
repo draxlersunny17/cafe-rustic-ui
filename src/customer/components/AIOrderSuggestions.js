@@ -2,6 +2,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Coffee, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import CoffeeSipLoader from "../../common/CoffeeSipLoader";
 
 const headingTemplates = [
   (item) => `Because you love ${item}…`,
@@ -29,6 +30,7 @@ export default function AIOrderSuggestions({
 }) {
   const [suggestions, setSuggestions] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [, setSuggestedItems] = useState([]);
   // Define heading templates
 
   // ✅ Prevent multiple API calls in StrictMode
@@ -84,6 +86,11 @@ export default function AIOrderSuggestions({
         const data = await res.json();
         if (data.reply) {
           setSuggestions(data.reply);
+
+          const detected = menuItems.filter((item) =>
+            data.reply.toLowerCase().includes(item.name.toLowerCase())
+          );
+          setSuggestedItems(detected);
         }
       } catch (err) {
         console.error("AI Suggestion error:", err);
@@ -129,14 +136,11 @@ export default function AIOrderSuggestions({
 
       {/* Suggestions */}
       {loading ? (
-        <div className="space-y-6">
-          {/* Skeleton for text suggestion */}
-          <div
-            className={`h-16 rounded-2xl animate-pulse ${
-              theme === "dark" ? "bg-gray-700/50" : "bg-gray-200"
-            }`}
-          ></div>
-        </div>
+        <CoffeeSipLoader
+          size={200}
+          message="Brewing personalized picks..."
+          className="drop-shadow-lg"
+        />
       ) : (
         <div className="space-y-6">
           {suggestions && (
@@ -157,7 +161,64 @@ export default function AIOrderSuggestions({
             </motion.div>
           )}
 
- 
+          {/* {suggestedItems.length > 0 && (
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {suggestedItems.map((item) => (
+                <motion.div
+                  key={item.id}
+                  whileHover={{ scale: 1.04 }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                  className={`rounded-2xl overflow-hidden shadow-lg flex flex-col ${
+                    theme === "dark" ? "bg-gray-800" : "bg-white"
+                  }`}
+                >
+                  {item.image && (
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      className="h-32 w-full object-cover"
+                    />
+                  )}
+                  <div className="p-5 flex flex-col flex-grow justify-between">
+                    <div>
+                      <h3 className="text-lg font-bold tracking-wide mb-2">
+                        {item.name}
+                      </h3>
+
+                      {item.short_desc && (
+                        <p
+                          className={`text-sm leading-relaxed mb-3 ${
+                            theme === "dark" ? "text-gray-300" : "text-gray-700"
+                          }`}
+                        >
+                          {item.short_desc}
+                        </p>
+                      )}
+
+                      {item.price && (
+                        <p className="text-base font-semibold text-emerald-600 dark:text-emerald-400">
+                          ₹{item.price}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="border-t border-gray-200 dark:border-gray-700 my-3"></div>
+
+                    <button
+                      onClick={() => onAddToCart(item, 1)}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-full 
+               bg-gradient-to-r from-green-500 to-emerald-600 
+               text-white text-sm font-semibold shadow-md hover:shadow-lg 
+               hover:from-green-600 hover:to-emerald-700 transition-all"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Add to Cart
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )} */}
         </div>
       )}
     </motion.div>
