@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 const SUPABASE_URL = process.env.REACT_APP_SUPABASE_URL;
 const SUPABASE_ANON_KEY = process.env.REACT_APP_SUPABASE_ANON_KEY;
 
@@ -345,6 +347,7 @@ export async function deleteUser(userId) {
 // supabaseApi.js
 export async function addMenuItem(item) {
   try {
+    const newItem = { id: uuidv4(), ...item };
     const res = await fetch(`${SUPABASE_URL}/rest/v1/menu_items`, {
       method: "POST",
       headers: {
@@ -353,7 +356,7 @@ export async function addMenuItem(item) {
         "Content-Type": "application/json",
         Prefer: "return=representation",
       },
-      body: JSON.stringify(item),
+      body: JSON.stringify(newItem),
     });
     if (!res.ok) throw new Error("Failed to add menu item");
     const data = await res.json();

@@ -97,6 +97,16 @@ export default function SpecialOffersAdminPage() {
     setConfirmDelete({ open: false, offerId: null });
   }
 
+  const toTitleCase = (str) =>
+    str
+      .replace(/_/g, " ") // replace underscores with spaces
+      .replace(
+        /\w\S*/g,
+        (
+          txt // capitalize each word
+        ) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()
+      );
+
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="flex justify-between items-center">
@@ -131,7 +141,7 @@ export default function SpecialOffersAdminPage() {
                   {offer.description}
                 </p>
                 <p className="text-xs text-gray-500">
-                  Type: {offer.type} <br />
+                  Type: {toTitleCase(offer.type)} <br />
                   Valid: {offer.valid_from} → {offer.valid_to}
                 </p>
                 {offer.updated_at && (

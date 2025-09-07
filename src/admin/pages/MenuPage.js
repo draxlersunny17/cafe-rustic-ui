@@ -337,30 +337,48 @@ export default function MenuPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 mb-6">
               {Object.keys(newItem)
                 .filter((field) => field !== "is_chef_recommended")
-                .map((field) => (
-                  <input
-                    key={field}
-                    placeholder={toTitleCase(field)}
-                    className="border px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-300"
-                    type={
-                      ["price", "calories"].includes(field) ? "number" : "text"
-                    }
-                    min={["price", "calories"].includes(field) ? 0 : undefined} // 🔥 Prevent negatives
-                    value={
-                      ["price", "calories"].includes(field) &&
-                      (newItem[field] === null || newItem[field] === undefined)
-                        ? ""
-                        : newItem[field]
-                    }
-                    onChange={(e) => {
-                      let value = e.target.value;
-                      if (["price", "calories"].includes(field)) {
-                        value = value === "" ? 0 : Math.max(0, +value); // 🔥 Ensure >= 0
+                .map((field) =>
+                  field === "category" ? (
+                    <select
+                      key={field}
+                      name="category"
+                      value={newItem.category}
+                      onChange={(e) =>
+                        setNewItem((n) => ({ ...n, category: e.target.value }))
                       }
-                      setNewItem((n) => ({ ...n, [field]: value }));
-                    }}
-                  />
-                ))}
+                      className="border px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-300"
+                    >
+                      <option value="" disabled>Select Category</option>
+                      <option value="Brunch">Brunch</option>
+                      <option value="Coffee">Coffee</option>
+                      <option value="Bakery">Bakery</option>
+                      <option value="Desserts">Desserts</option>
+                    </select>
+                  ) : (
+                    <input
+                      key={field}
+                      placeholder={toTitleCase(field)}
+                      className="border px-3 py-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-300"
+                      type={
+                        ["price", "calories"].includes(field) ? "number" : "text"
+                      }
+                      min={["price", "calories"].includes(field) ? 0 : undefined} // 🔥 Prevent negatives
+                      value={
+                        ["price", "calories"].includes(field) &&
+                        (newItem[field] === null || newItem[field] === undefined)
+                          ? ""
+                          : newItem[field]
+                      }
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        if (["price", "calories"].includes(field)) {
+                          value = value === "" ? 0 : Math.max(0, +value); // 🔥 Ensure >= 0
+                        }
+                        setNewItem((n) => ({ ...n, [field]: value }));
+                      }}
+                    />
+                  )
+                )}
               <label className="flex items-center gap-2 col-span-full">
                 <input
                   type="checkbox"
