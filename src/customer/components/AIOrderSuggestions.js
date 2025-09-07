@@ -2,7 +2,7 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Coffee, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
-import CoffeeSipLoader from "../../common/CoffeeSipLoader";
+import CoffeeSipLoader from "../../loaders/CoffeeSipLoader";
 
 const headingTemplates = [
   (item) => `Because you love ${item}…`,

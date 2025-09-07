@@ -1,8 +1,9 @@
-
 import React, { useEffect, useState } from "react";
 import Slider from "react-slick";
 import { fetchSpecialOffers } from "../../service/supabaseApi";
-
+// import app.css
+import "../../App.css";
+import RewardBoxLoader from "../../loaders/RewardBoxLoader";
 
 export default function SpecialOffersCarousel({ theme, userProfile }) {
   const [offers, setOffers] = useState([]);
@@ -10,7 +11,11 @@ export default function SpecialOffersCarousel({ theme, userProfile }) {
 
   useEffect(() => {
     async function loadOffers() {
-      if (!userProfile) return;
+      if (!userProfile) {
+        setLoading(false);
+        setOffers([]);
+        return;
+      }
       const today = new Date();
       const isBirthday =
         userProfile?.dob &&
@@ -54,9 +59,6 @@ export default function SpecialOffersCarousel({ theme, userProfile }) {
     arrows: false,
   };
 
-
-
-
   // Determine theme styles
   const isDark = theme === "dark";
   const sectionBg = isDark ? "bg-gray-900" : "bg-amber-50";
@@ -68,7 +70,45 @@ export default function SpecialOffersCarousel({ theme, userProfile }) {
   if (loading) {
     return (
       <section className={`${sectionBg} py-8`} id="special-offers">
-        <div className="max-w-5xl mx-auto px-6 text-center text-lg text-gray-400">Loading offers...</div>
+        <div className="max-w-5xl mx-auto px-6 text-center text-lg text-gray-400">
+          Loading offers...
+        </div>
+      </section>
+    );
+  }
+
+  if (!userProfile) {
+    return (
+      <section
+        className={`${sectionBg} py-12 transition-colors duration-500`}
+        id="special-offers"
+      >
+        <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center animate-fade-in">
+          {/* Reward loader instead of static icon */}
+          <div className="animate-bounce-in">
+            <RewardBoxLoader size={120} message="" />
+          </div>
+          <h2
+            className="text-2xl font-bold drop-shadow-lg animate-fade-in delay-200"
+            style={{
+              color: isDark ? "#fef3c7" : "#111827",
+              textShadow: isDark
+                ? "0 2px 12px rgba(251,191,36,0.6), 0 1px 2px rgba(0,0,0,0.7)"
+                : "0 2px 8px rgba(0,0,0,0.15)",
+            }}
+          >
+            Sign in to see special offers
+          </h2>
+          <p
+            className="mt-3 text-base animate-fade-in delay-400"
+            style={{
+              color: isDark ? "rgba(253,230,138,0.8)" : "#374151",
+            }}
+          >
+            Unlock exclusive deals, birthday surprises, and loyalty rewards just
+            for you!
+          </p>
+        </div>
       </section>
     );
   }
@@ -76,7 +116,9 @@ export default function SpecialOffersCarousel({ theme, userProfile }) {
   if (!offers.length) {
     return (
       <section className={`${sectionBg} py-8`} id="special-offers">
-        <div className="max-w-5xl mx-auto px-6 text-center text-lg text-gray-400">No special offers available right now.</div>
+        <div className="max-w-5xl mx-auto px-6 text-center text-lg text-gray-400">
+          No special offers available right now.
+        </div>
       </section>
     );
   }
