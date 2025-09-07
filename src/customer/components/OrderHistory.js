@@ -21,7 +21,7 @@ export default function OrderHistory({
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [searchQuery, setSearchQuery] = useState(""); // NEW state for search
   const [selectedMonth, setSelectedMonth] = useState("");
-  
+
   // --- Filtered Orders ---
   const filteredOrders = orderHistory.filter((order) => {
     const orderMonth = new Date(order.date).getMonth();
@@ -447,13 +447,25 @@ export default function OrderHistory({
         )}
 
         {orderHistory.length === 0 ? (
-          <p
-            className={`text-center text-lg ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
-            You haven’t placed any orders yet.
-          </p>
+          <>
+            {!userProfile ? (
+              <p
+                className={`text-lg text-center ${
+                  isDark ? "text-amber-400" : "text-amber-600"
+                }`}
+              >
+                Sign in to view your past orders.
+              </p>
+            ) : (
+              <p
+                className={`text-center text-lg ${
+                  isDark ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                You haven’t placed any orders yet.
+              </p>
+            )}
+          </>
         ) : (
           <>
             {filteredOrders.length > 0 ? (

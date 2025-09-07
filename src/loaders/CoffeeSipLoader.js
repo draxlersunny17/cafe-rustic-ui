@@ -1,6 +1,6 @@
-
 export default function CoffeeSipLoader({
   size = 160,
+  theme = "light",
   message = "Preparing your coffee…",
   className = "",
 }) {
@@ -19,7 +19,14 @@ export default function CoffeeSipLoader({
         aria-hidden="true"
       >
         {/* Saucer */}
-        <ellipse cx="100" cy="170" rx="70" ry="10" fill="#d6c7b5" opacity="0.6" />
+        <ellipse
+          cx="100"
+          cy="170"
+          rx="70"
+          ry="10"
+          fill="#d6c7b5"
+          opacity="0.6"
+        />
 
         {/* Cup */}
         <rect
@@ -35,7 +42,12 @@ export default function CoffeeSipLoader({
         />
 
         {/* Handle */}
-        <path d="M150 95 a20 20 0 1 1 0 40" fill="none" stroke="#6b4f36" strokeWidth="5" />
+        <path
+          d="M150 95 a20 20 0 1 1 0 40"
+          fill="none"
+          stroke="#6b4f36"
+          strokeWidth="5"
+        />
 
         {/* Coffee liquid */}
         <rect
@@ -80,7 +92,7 @@ export default function CoffeeSipLoader({
         <div
           style={{
             fontSize: Math.max(12, Math.round(size / 9)),
-            color: "#4a2c1a",
+            color: theme === "dark" ? "#fef3c7" : "#4a2c1a",
             textAlign: "center",
             fontWeight: 500,
           }}

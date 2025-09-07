@@ -138,6 +138,7 @@ export default function AIOrderSuggestions({
       {loading ? (
         <CoffeeSipLoader
           size={200}
+          theme={theme}
           message="Brewing personalized picks..."
           className="drop-shadow-lg"
         />
