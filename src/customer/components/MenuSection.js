@@ -113,7 +113,7 @@ export default function MenuSection({
                       {chips.map((chip, idx) => (
                         <span
                           key={idx}
-                          className={`px-2 py-1 rounded-full text-xs font-semibold border ${chip.color}`}
+                          className={`px-2 py-1 rounded-full text-xs font-semibold border ${chip.color} w-fit`}
                           style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.07)" }}
                         >
                           {chip.label}
