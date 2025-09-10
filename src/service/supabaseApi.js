@@ -209,6 +209,12 @@ export async function updateUserDetails(userId, updates) {
 
 export async function addOrder(order) {
   try {
+    const newOrder = {
+      status: "Order Placed", // ✅ default
+      paused: false,          // ✅ default
+      ...order,               // merge in user data (items, totals, etc.)
+    };
+
     const response = await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
       method: "POST",
       headers: {
@@ -217,18 +223,42 @@ export async function addOrder(order) {
         "Content-Type": "application/json",
         Prefer: "return=representation", // return inserted row
       },
-      body: JSON.stringify(order),
+      body: JSON.stringify(newOrder),
     });
 
     if (!response.ok) throw new Error("Failed to insert order");
 
     const data = await response.json();
-    return data[0]; // inserted order
+    return data[0]; // inserted order row
   } catch (error) {
     console.error("Error adding order:", error);
     return null;
   }
 }
+
+export async function updateOrder(id, updates) {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${id}`, {
+      method: "PATCH",
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation", // return updated row
+      },
+      body: JSON.stringify(updates),
+    });
+
+    if (!res.ok) throw new Error("Failed to update order");
+
+    const data = await res.json();
+    return data[0]; // updated order row
+  } catch (err) {
+    console.error("Error updating order:", err);
+    return null;
+  }
+}
+
 
 export async function fetchOrdersByUser(userId) {
   try {
