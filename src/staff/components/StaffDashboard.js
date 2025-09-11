@@ -16,6 +16,7 @@ export default function StaffDashboard() {
   const [toast, setToast] = useState("");
 
   const prevOrderIdsRef = React.useRef([]);
+  const isFirstFetchRef = React.useRef(true);
   const statusFlow = ["Order Placed", "In Preparation", "Completed"];
 
   const showToast = (msg) => {
@@ -27,12 +28,16 @@ export default function StaffDashboard() {
     if (showLoader) setInitialLoading(true);
     const allOrders = await fetchAllOrders();
 
-    // Detect new orders
+    // Detect new orders, but skip on first fetch
     const existingIds = prevOrderIdsRef.current;
-    const newOrders = allOrders.filter((o) => !existingIds.includes(o.id));
-    newOrders.forEach((o) =>
-      showToast(`New order received #${o.order_number} 🛒`)
-    );
+    if (!isFirstFetchRef.current) {
+      const newOrders = allOrders.filter((o) => !existingIds.includes(o.id));
+      newOrders.forEach((o) =>
+        showToast(`New order received #${o.order_number} 🛒`)
+      );
+    } else {
+      isFirstFetchRef.current = false;
+    }
     prevOrderIdsRef.current = allOrders.map((o) => o.id);
 
     // Fetch user profiles
