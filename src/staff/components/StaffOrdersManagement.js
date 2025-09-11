@@ -7,7 +7,7 @@ import { supabase } from "../../service/supabaseClient";
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function OrdersManagementDashboard() {
+export default function StaffOrdersManagement() {
   const [orders, setOrders] = useState([]);
   const [userMap, setUserMap] = useState({});
   const [initialLoading, setInitialLoading] = useState(true);
@@ -284,6 +284,12 @@ export default function OrdersManagementDashboard() {
                       {new Date(order.date).toLocaleString()}
                     </p>
                   )}
+                  {order.status === "In Preparation" && order.prep_time && (
+                    <p>
+                      <span className="font-medium">⏱ Preparation time:</span>{" "}
+                      {order.prep_time} min
+                    </p>
+                  )}
                   {order.items_count && (
                     <p>
                       <span className="font-medium">Items:</span>{" "}
@@ -316,34 +322,42 @@ export default function OrdersManagementDashboard() {
                         </motion.button>
 
                         {/* Prep time input (minutes) */}
-                        <div className="flex items-center gap-2 flex-1">
-                          <input
-                            type="number"
-                            min="1"
-                            placeholder="Prep (min)"
-                            className="w-24 px-3 py-2 rounded-lg border text-sm shadow-sm dark:bg-gray-700 dark:text-gray-200"
-                            defaultValue={order.prep_time || ""}
-                            onBlur={async (e) => {
-                              const minutes = parseInt(e.target.value, 10);
-                              if (!isNaN(minutes) && minutes > 0) {
-                                const updated = await updateOrder(order.id, {
-                                  prep_time: minutes,
-                                });
-                                if (updated) {
-                                  showToast(
-                                    `Prep time set to ${minutes} min ⏱`
-                                  );
-                                  fetchOrders(false);
-                                }
-                              }
-                            }}
-                            onKeyDown={async (e) => {
-                              if (e.key === "Enter") {
-                                e.target.blur(); // trigger onBlur save
-                              }
-                            }}
-                          />
-                        </div>
+                        {!order.prep_time && (
+                          <>
+                            <div className="flex items-center gap-2 flex-1">
+                              <input
+                                type="number"
+                                min="1"
+                                placeholder="Prep (min)"
+                                className="w-24 px-3 py-2 rounded-lg border text-sm shadow-sm dark:bg-gray-700 dark:text-gray-200"
+                                defaultValue={order.prep_time || ""}
+                                onBlur={async (e) => {
+                                  const minutes = parseInt(e.target.value, 10);
+                                  if (!isNaN(minutes) && minutes > 0) {
+                                    const updated = await updateOrder(
+                                      order.id,
+                                      {
+                                        prep_time: minutes,
+                                      }
+                                    );
+                                    if (updated) {
+                                      showToast(
+                                        `Prep time set to ${minutes} min ⏱`
+                                      );
+                                      fetchOrders(false);
+                                    }
+                                  }
+                                }}
+                                disabled={order.prep_time}
+                                onKeyDown={async (e) => {
+                                  if (e.key === "Enter") {
+                                    e.target.blur(); // trigger onBlur save
+                                  }
+                                }}
+                              />
+                            </div>
+                          </>
+                        )}
                       </>
                     )}
 
