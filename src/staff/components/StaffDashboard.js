@@ -337,6 +337,11 @@ export default function StaffDashboard() {
                                 }
                               }
                             }}
+                            onKeyDown={async (e) => {
+                              if (e.key === "Enter") {
+                                e.target.blur(); // trigger onBlur save
+                              }
+                            }}
                           />
                         </div>
                       </>
