@@ -6,7 +6,6 @@ export default function StaffDashboard() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch all orders on mount & listen for realtime changes
   useEffect(() => {
     let subscription;
 
@@ -24,9 +23,7 @@ export default function StaffDashboard() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders" },
-        () => {
-          fetchOrders(); // refresh whenever orders change
-        }
+        () => fetchOrders()
       )
       .subscribe();
 
@@ -35,79 +32,139 @@ export default function StaffDashboard() {
     };
   }, []);
 
-  // Pause/resume order
   const handlePause = async (orderId, paused) => {
     const updated = await updateOrder(orderId, { paused: !paused });
     if (updated) {
-      setOrders((prev) =>
-        prev.map((order) => (order.id === orderId ? updated : order))
-      );
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
     }
   };
 
-  // Change order status
   const handleStatusChange = async (orderId, newStatus) => {
     const updated = await updateOrder(orderId, { status: newStatus });
     if (updated) {
-      setOrders((prev) =>
-        prev.map((order) => (order.id === orderId ? updated : order))
-      );
+      setOrders((prev) => prev.map((o) => (o.id === orderId ? updated : o)));
     }
   };
 
+  const getCardStyle = (status) => {
+    switch (status) {
+      case "Order Placed":
+        return "bg-blue-50 border border-blue-100";
+      case "In Preparation":
+        return "bg-amber-50 border border-amber-100";
+      case "Completed":
+        return "bg-gray-100 border border-gray-200";
+      default:
+        return "bg-white border border-gray-100";
+    }
+  };
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "Order Placed":
+        return "bg-blue-100 text-blue-700 border border-blue-200";
+      case "In Preparation":
+        return "bg-amber-100 text-amber-700 border border-amber-200";
+      case "Completed":
+        return "bg-gray-200 text-gray-600 border border-gray-300";
+      default:
+        return "bg-gray-100 text-gray-600 border border-gray-200";
+    }
+  };
+
+  const statusFlow = ["Order Placed", "In Preparation", "Completed"];
+
   return (
-    <div className="p-8 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6">Staff Dashboard</h2>
+    <div className="p-8 max-w-6xl mx-auto">
+      <h2 className="text-3xl font-extrabold mb-8 text-gray-800">
+        Staff Dashboard
+      </h2>
 
       {loading ? (
-        <div>Loading orders...</div>
+        <div className="text-gray-500">Loading orders...</div>
       ) : (
-        <div className="space-y-6">
-          {orders.length === 0 && <div>No orders yet.</div>}
+        <div className="grid gap-6 md:grid-cols-2">
+          {orders.length === 0 && (
+            <div className="text-gray-500 text-center col-span-2">
+              No orders yet.
+            </div>
+          )}
 
           {orders.map((order) => (
             <div
               key={order.id}
-              className="bg-white rounded-lg shadow p-4 flex flex-col md:flex-row md:items-center justify-between"
+              className={`rounded-2xl shadow-md hover:shadow-xl transition-shadow p-6 flex flex-col justify-between ${getCardStyle(
+                order.status
+              )}`}
             >
-              {/* Order info */}
-              <div>
-                <div className="font-semibold">Order #{order.order_number}</div>
-                <div className="text-sm text-gray-500">
-                  Customer: {order.customer_name || order.user_id}
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="font-bold text-lg text-gray-900">
+                  Order #{order.order_number}
                 </div>
-                <div className="text-sm mt-1">
-                  Status: <span className="font-mono">{order.status}</span>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusStyle(
+                    order.status
+                  )}`}
+                >
+                  {order.status}
+                </span>
+              </div>
+
+              {/* Details */}
+              <div className="mt-3 text-sm text-gray-700 space-y-1">
+                <div>
+                  <span className="font-medium">Customer:</span>{" "}
+                  {order.customer_name || order.user_id}
                 </div>
-                {order.paused && (
-                  <div className="text-red-500 text-xs mt-1">Paused</div>
+                <div>
+                  <span className="font-medium">Total:</span> ₹{order.total}
+                </div>
+                {order.paused && order.status !== "Completed" && (
+                  <div className="text-red-500 font-semibold text-xs">
+                    ⏸ Paused
+                  </div>
                 )}
               </div>
 
               {/* Controls */}
-              <div className="flex gap-2 mt-4 md:mt-0">
-                <button
-                  onClick={() => handlePause(order.id, order.paused)}
-                  className={`px-4 py-2 rounded ${
-                    order.paused ? "bg-green-500" : "bg-yellow-400"
-                  } text-white font-semibold`}
-                >
-                  {order.paused ? "Resume" : "Pause"}
-                </button>
+              {order.status !== "Completed" && (
+                <div className="mt-5 flex gap-3 flex-wrap">
+                  {/* Pause button only visible if order is in In Preparation */}
+                  {order.status === "In Preparation" && (
+                    <button
+                      onClick={() => handlePause(order.id, order.paused)}
+                      className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-semibold text-sm transition shadow-sm ${
+                        order.paused
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : "bg-amber-400 hover:bg-amber-500 text-white"
+                      }`}
+                    >
+                      {order.paused ? "▶ Resume" : "⏸ Pause"}
+                    </button>
+                  )}
 
-                <select
-                  value={order.status}
-                  onChange={(e) =>
-                    handleStatusChange(order.id, e.target.value)
-                  }
-                  className="px-2 py-1 rounded border"
-                >
-                  <option>Order Placed</option>
-                  <option>In Preparation</option>
-                  <option>Ready to Serve</option>
-                  <option>Completed</option>
-                </select>
-              </div>
+                  <select
+                    value={order.status}
+                    onChange={(e) =>
+                      handleStatusChange(order.id, e.target.value)
+                    }
+                    className="flex-1 min-w-[150px] px-3 py-2 rounded-lg border text-sm shadow-sm focus:ring-2 focus:ring-indigo-400"
+                  >
+                    {statusFlow.map((status) => (
+                      <option
+                        key={status}
+                        disabled={
+                          statusFlow.indexOf(status) <
+                          statusFlow.indexOf(order.status)
+                        }
+                      >
+                        {status}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
           ))}
         </div>

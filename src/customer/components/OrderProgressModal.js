@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "../../service/supabaseClient";
 import { updateOrder } from "../../service/supabaseApi";
 import { launchConfetti } from "../../utils/confetti";
+import { Check } from "lucide-react";
 
 // Images / icons (keep your existing ones or replace)
 const defaultImage = "https://cdn-icons-png.flaticon.com/512/992/992700.png";
@@ -12,15 +13,10 @@ const readyImage =
 const foodReadyImage =
   "https://static.vecteezy.com/system/resources/previews/012/751/486/non_2x/food-preparation-icon-style-vector.jpg";
 
-const STEPS = [
-  "Order Placed",
-  "In Preparation",
-  "Ready to Serve",
-  "Completed",
-];
+const STEPS = ["Order Placed", "In Preparation", "Completed"];
 
 // default durations (ms) for auto-advance for each step except Completed
-const STEP_DURATIONS = [30_000, 120_000, 30_000];
+const STEP_DURATIONS = [30_000, 240_000];
 
 export default function OrderProgressModal({
   isOpen,
@@ -35,7 +31,8 @@ export default function OrderProgressModal({
   const intervalRef = useRef(null);
   const subRef = useRef(null);
 
-  const bgColor = theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
+  const bgColor =
+    theme === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900";
 
   const getStepIndex = (status) => {
     const idx = STEPS.indexOf(status);
@@ -144,7 +141,12 @@ export default function OrderProgressModal({
       .channel(`order-progress-${orderNumber}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders", filter: `order_number=eq.${orderNumber}` },
+        {
+          event: "*",
+          schema: "public",
+          table: "orders",
+          filter: `order_number=eq.${orderNumber}`,
+        },
         (payload) => {
           // payload.new contains the updated row
           if (payload && payload.new) {
@@ -197,7 +199,9 @@ export default function OrderProgressModal({
   const formatTime = (ms) => {
     if (ms == null) return "--:--";
     const s = Math.max(0, Math.floor(ms / 1000));
-    const mm = Math.floor(s / 60).toString().padStart(2, "0");
+    const mm = Math.floor(s / 60)
+      .toString()
+      .padStart(2, "0");
     const ss = (s % 60).toString().padStart(2, "0");
     return `${mm}:${ss}`;
   };
@@ -225,16 +229,30 @@ export default function OrderProgressModal({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between">
-              <h2 className="text-2xl font-semibold">Order #{order?.order_number ?? "—"}</h2>
-              <div className="text-sm text-gray-500">{order?.date ? new Date(order.date).toLocaleString() : ""}</div>
+              <h2 className="text-2xl font-semibold">
+                Order #{order?.order_number ?? "—"}
+              </h2>
+              <div className="text-sm text-gray-500">
+                {order?.date ? new Date(order.date).toLocaleString() : ""}
+              </div>
             </div>
 
             <div className="mt-6">
               {/* Progress */}
               <div className="flex items-center mb-6">
                 {STEPS.map((title, idx) => {
-                  const isActive = order ? idx === getStepIndex(order.status) : idx === 0;
-                  const isCompleted = order ? idx < getStepIndex(order.status) : false;
+                  const isActive = order
+                    ? idx === getStepIndex(order.status)
+                    : idx === 0;
+                  // isCompleted should be true for all steps before the current, and also for the current step if status is 'Completed'
+                  let isCompleted = false;
+                  if (order) {
+                    if (order.status === "Completed") {
+                      isCompleted = true;
+                    } else {
+                      isCompleted = idx < getStepIndex(order.status);
+                    }
+                  }
 
                   return (
                     <React.Fragment key={title}>
@@ -252,21 +270,37 @@ export default function OrderProgressModal({
                           }}
                           className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-gray-300"
                         >
-                          <img
-                            src={
-                              title === "In Preparation" && order?.paused
-                                ? foodReadyImage
-                                : title === "Ready to Serve"
-                                ? readyImage
-                                : defaultImage
-                            }
-                            alt={title}
-                            className="w-10 h-10 rounded-full object-cover border border-white"
-                          />
+                          {isCompleted && title !== "Completed" ? (
+                            // ✅ For completed "Order Placed" and "In Preparation"
+                            <span className="p-[9px] bg-white rounded-[21px] text-black text-2xl flex items-center justify-center">
+                              <Check className="w-5 h-5" strokeWidth={3} />
+                            </span>
+                          ) : (
+                            // 🖼 For active or not-yet-completed steps + Completed final image
+                            <img
+                              src={
+                                title === "In Preparation" && order?.paused
+                                  ? foodReadyImage
+                                  : title === "Completed"
+                                  ? readyImage
+                                  : defaultImage
+                              }
+                              alt={title}
+                              className={`w-10 h-10 rounded-full object-cover border border-white ${
+                                isActive && !isCompleted && !order?.paused
+                                  ? "animate-[spin_6s_linear_infinite]"
+                                  : ""
+                              }`}
+                            />
+                          )}
                         </motion.div>
                         <span
                           className={`mt-2 text-sm font-semibold text-center ${
-                            isCompleted ? "text-green-600" : isActive ? "text-amber-500" : "text-gray-400"
+                            isCompleted
+                              ? "text-green-600"
+                              : isActive
+                              ? "text-amber-500"
+                              : "text-gray-400"
                           }`}
                         >
                           {title}
@@ -278,7 +312,10 @@ export default function OrderProgressModal({
                           layout
                           initial={false}
                           animate={{
-                            background: order && idx < getStepIndex(order.status) ? "#4ade80" : "#f3f4f6",
+                            background:
+                              order && idx < getStepIndex(order.status)
+                                ? "#4ade80"
+                                : "#f3f4f6",
                           }}
                           className="flex-1 h-1 rounded-full mx-3 -mt-6"
                         />
@@ -302,7 +339,12 @@ export default function OrderProgressModal({
                       <div className="font-mono">{formatTime(remaining)}</div>
                     </div>
                   ) : (
-                    <div className="text-red-500 font-semibold">Preparation Paused</div>
+                    <div className="text-amber-600 font-semibold flex items-center gap-2">
+                      <span className="inline-block animate-[spin_6s_linear_infinite]">
+                        ⏳
+                      </span>
+                      <span className="text-sm italic">Your order will be ready soon</span>
+                    </div>
                   )}
                 </div>
               </div>
@@ -314,7 +356,9 @@ export default function OrderProgressModal({
                     <button
                       onClick={togglePause}
                       className={`px-4 py-2 rounded ${
-                        order.paused ? "bg-green-500 hover:bg-green-600 text-white" : "bg-amber-400 hover:bg-amber-500 text-white"
+                        order.paused
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : "bg-amber-400 hover:bg-amber-500 text-white"
                       } font-semibold`}
                     >
                       {order.paused ? "Resume" : "Pause"}
@@ -334,7 +378,8 @@ export default function OrderProgressModal({
                   </div>
 
                   <div className="text-sm text-gray-500">
-                    Changes here will update the order in realtime for customers & staff.
+                    Changes here will update the order in realtime for customers
+                    & staff.
                   </div>
                 </div>
               )}
