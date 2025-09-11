@@ -23,7 +23,6 @@ export default function OrderProgressModal({
   onClose,
   orderNumber,
   theme = "light",
-  allowControl = false, // set true for staff to show controls inside modal
 }) {
   const [order, setOrder] = useState(null);
   const [remaining, setRemaining] = useState(null); // ms left for current step (for UI)
@@ -170,32 +169,6 @@ export default function OrderProgressModal({
     };
   }, [isOpen, orderNumber]);
 
-  // helper to toggle paused state (persist to DB)
-  const togglePause = async () => {
-    if (!order) return;
-    try {
-      // optimistic update for immediate feedback
-      setOrder((prev) => ({ ...prev, paused: !prev?.paused }));
-      await updateOrder(order.id, { paused: !order.paused });
-      // subscription will sync the final value
-    } catch (err) {
-      console.error("Pause toggle failed:", err);
-    }
-  };
-
-  // helper to change status manually
-  const changeStatus = async (newStatus) => {
-    if (!order) return;
-    try {
-      setOrder((prev) => ({ ...prev, status: newStatus }));
-      await updateOrder(order.id, { status: newStatus });
-      // subscription will sync
-    } catch (err) {
-      console.error("Status change failed:", err);
-    }
-  };
-
-  // format ms -> mm:ss
   const formatTime = (ms) => {
     if (ms == null) return "--:--";
     const s = Math.max(0, Math.floor(ms / 1000));
@@ -349,42 +322,7 @@ export default function OrderProgressModal({
                 </div>
               </div>
 
-              {/* Controls: only show if allowed (staff) */}
-              {allowControl && order && (
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={togglePause}
-                      className={`px-4 py-2 rounded ${
-                        order.paused
-                          ? "bg-green-500 hover:bg-green-600 text-white"
-                          : "bg-amber-400 hover:bg-amber-500 text-white"
-                      } font-semibold`}
-                    >
-                      {order.paused ? "Resume" : "Pause"}
-                    </button>
-
-                    <select
-                      value={order.status}
-                      onChange={(e) => changeStatus(e.target.value)}
-                      className="px-3 py-2 rounded border"
-                    >
-                      {STEPS.map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className="text-sm text-gray-500">
-                    Changes here will update the order in realtime for customers
-                    & staff.
-                  </div>
-                </div>
-              )}
-
-              {/* Close button when completed */}
+              {/* Staff-only pause/resume + Close on complete */}
               {order?.status === "Completed" && (
                 <div className="mt-6">
                   <button

@@ -215,10 +215,10 @@ export default function StaffDashboard() {
                 </div>
 
                 {/* Customer */}
-               <div className="flex items-center gap-3 mb-4">
-  {/* Avatar */}
-  <div
-    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold shadow-sm
+                <div className="flex items-center gap-3 mb-4">
+                  {/* Avatar */}
+                  <div
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold shadow-sm
       ${
         order.status === "Completed"
           ? "bg-gray-700 text-white"
@@ -228,20 +228,20 @@ export default function StaffDashboard() {
           ? "bg-sky-200 text-sky-900 dark:bg-sky-600 dark:text-white"
           : "bg-gray-300 text-gray-700 dark:bg-gray-600 dark:text-gray-200"
       }`}
-  >
-    {customer?.name
-      ? customer.name
-          .split(" ")
-          .map((word) => word.charAt(0).toUpperCase())
-          .slice(0, 2)
-          .join("")
-      : "?"}
-  </div>
+                  >
+                    {customer?.name
+                      ? customer.name
+                          .split(" ")
+                          .map((word) => word.charAt(0).toUpperCase())
+                          .slice(0, 2)
+                          .join("")
+                      : "?"}
+                  </div>
 
-  {/* Name + Phone */}
-  <div className="flex flex-col">
-    <span
-      className={`text-sm font-medium tracking-wide
+                  {/* Name + Phone */}
+                  <div className="flex flex-col">
+                    <span
+                      className={`text-sm font-medium tracking-wide
         ${
           order.status === "Completed"
             ? "text-gray-300"
@@ -251,17 +251,16 @@ export default function StaffDashboard() {
             ? "text-sky-900 dark:text-sky-200"
             : "text-gray-800 dark:text-gray-200"
         }`}
-    >
-      {customer?.name || order.customer_name || order.user_id}
-    </span>
-    {customer?.phone && (
-      <span className="text-xs text-gray-500 dark:text-gray-400">
-        {customer.phone}
-      </span>
-    )}
-  </div>
-</div>
-
+                    >
+                      {customer?.name || order.customer_name || order.user_id}
+                    </span>
+                    {customer?.phone && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {customer.phone}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
                 {/* Order Summary */}
                 <div
@@ -302,19 +301,48 @@ export default function StaffDashboard() {
                 {order.status !== "Completed" && (
                   <div className="flex gap-2 flex-wrap">
                     {order.status === "In Preparation" && (
-                      <motion.button
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => handlePause(order.id, order.paused)}
-                        className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
-                          order.paused
-                            ? "bg-green-500 hover:bg-green-600 text-white"
-                            : "bg-amber-400 hover:bg-amber-500 text-white"
-                        }`}
-                      >
-                        {order.paused ? "▶ Resume" : "⏸ Pause"}
-                      </motion.button>
+                      <>
+                        {/* Pause / Resume */}
+                        <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handlePause(order.id, order.paused)}
+                          className={`flex-1 min-w-[100px] px-4 py-2 rounded-lg font-semibold text-sm transition-colors ${
+                            order.paused
+                              ? "bg-green-500 hover:bg-green-600 text-white"
+                              : "bg-amber-400 hover:bg-amber-500 text-white"
+                          }`}
+                        >
+                          {order.paused ? "▶ Resume" : "⏸ Pause"}
+                        </motion.button>
+
+                        {/* Prep time input (minutes) */}
+                        <div className="flex items-center gap-2 flex-1">
+                          <input
+                            type="number"
+                            min="1"
+                            placeholder="Prep (min)"
+                            className="w-24 px-3 py-2 rounded-lg border text-sm shadow-sm dark:bg-gray-700 dark:text-gray-200"
+                            defaultValue={order.prep_time || ""}
+                            onBlur={async (e) => {
+                              const minutes = parseInt(e.target.value, 10);
+                              if (!isNaN(minutes) && minutes > 0) {
+                                const updated = await updateOrder(order.id, {
+                                  prep_time: minutes,
+                                });
+                                if (updated) {
+                                  showToast(
+                                    `Prep time set to ${minutes} min ⏱`
+                                  );
+                                  fetchOrders(false);
+                                }
+                              }
+                            }}
+                          />
+                        </div>
+                      </>
                     )}
 
+                    {/* Status dropdown */}
                     <select
                       value={order.status}
                       onChange={(e) =>
