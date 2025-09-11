@@ -7,7 +7,7 @@ import { supabase } from "../../service/supabaseClient";
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function StaffDashboard() {
+export default function OrdersManagementDashboard() {
   const [orders, setOrders] = useState([]);
   const [userMap, setUserMap] = useState({});
   const [initialLoading, setInitialLoading] = useState(true);
