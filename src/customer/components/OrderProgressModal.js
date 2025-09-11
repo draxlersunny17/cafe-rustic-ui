@@ -57,7 +57,13 @@ export default function OrderProgressModal({
       // Completed or no further step
       return;
     }
-    const duration = STEP_DURATIONS[stepIndex];
+    let duration = STEP_DURATIONS[stepIndex];
+
+    // If in preparation and staff set prep_time, override duration
+    if (order?.status === "In Preparation" && order?.prep_time) {
+      duration = order.prep_time * 60 * 1000; // minutes → ms
+    }
+
     setRemaining(duration);
 
     // Interval to update remaining every second
@@ -307,16 +313,25 @@ export default function OrderProgressModal({
 
                 <div className="text-right">
                   {!order?.paused ? (
-                    <div>
-                      <div className="text-sm text-gray-500">Time to next</div>
-                      <div className="font-mono">{formatTime(remaining)}</div>
+                    order?.status === "In Preparation" && !order?.prep_time ? (
+                      <div className="text-amber-600 font-semibold flex items-center gap-2">
+                      <span className="inline-block animate-[spin_6s_linear_infinite]">
+                        ⏳
+                      </span>
+                      <span className="text-sm italic">Your order will be ready soon</span>
                     </div>
+                    ) : (
+                      <div>
+                        <div className="text-sm text-gray-500">Time remaining</div>
+                        <div className="font-mono">{formatTime(remaining)}</div>
+                      </div>
+                    )
                   ) : (
                     <div className="text-amber-600 font-semibold flex items-center gap-2">
                       <span className="inline-block animate-[spin_6s_linear_infinite]">
                         ⏳
                       </span>
-                      <span className="text-sm italic">Your order will be ready soon</span>
+                      <span className="text-sm italic">Hang tight — your order is slightly delayed</span>
                     </div>
                   )}
                 </div>
