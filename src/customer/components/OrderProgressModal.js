@@ -58,10 +58,13 @@ export default function OrderProgressModal({
       return;
     }
     let duration = STEP_DURATIONS[stepIndex];
-
-    // If in preparation and staff set prep_time, override duration
-    if (order?.status === "In Preparation" && order?.prep_time) {
-      duration = order.prep_time * 60 * 1000; // minutes → ms
+    // If resuming "In Preparation", use remaining_time if available
+    if (order?.status === "In Preparation") {
+      if (order?.remaining_time) {
+        duration = order.remaining_time; // resume from leftover
+      } else if (order?.prep_time) {
+        duration = order.prep_time * 60 * 1000; // minutes → ms
+      }
     }
 
     setRemaining(duration);
@@ -100,6 +103,11 @@ export default function OrderProgressModal({
     // If paused, stop timers
     if (order.paused) {
       clearTimers();
+      if (remaining !== null && remaining > 0) {
+        updateOrder(order.id, { remaining_time: remaining }).catch((err) =>
+          console.error("Failed to save remaining_time:", err)
+        );
+      }
       return;
     }
 
@@ -315,14 +323,18 @@ export default function OrderProgressModal({
                   {!order?.paused ? (
                     order?.status === "In Preparation" && !order?.prep_time ? (
                       <div className="text-amber-600 font-semibold flex items-center gap-2">
-                      <span className="inline-block animate-[spin_6s_linear_infinite]">
-                        ⏳
-                      </span>
-                      <span className="text-sm italic">Your order will be ready soon</span>
-                    </div>
+                        <span className="inline-block animate-[spin_6s_linear_infinite]">
+                          ⏳
+                        </span>
+                        <span className="text-sm italic">
+                          Your order will be ready soon
+                        </span>
+                      </div>
                     ) : (
                       <div>
-                        <div className="text-sm text-gray-500">Time remaining</div>
+                        <div className="text-sm text-gray-500">
+                          Time remaining
+                        </div>
                         <div className="font-mono">{formatTime(remaining)}</div>
                       </div>
                     )
@@ -331,7 +343,9 @@ export default function OrderProgressModal({
                       <span className="inline-block animate-[spin_6s_linear_infinite]">
                         ⏳
                       </span>
-                      <span className="text-sm italic">Hang tight — your order is slightly delayed</span>
+                      <span className="text-sm italic">
+                        Hang tight — your order is slightly delayed
+                      </span>
                     </div>
                   )}
                 </div>
