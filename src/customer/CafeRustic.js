@@ -138,8 +138,7 @@ export default function CafeRustic() {
       latestOrder.status === "In Preparation"
     ) {
       setOrderNumber(latestOrder.order_number);
-      setOrderModalOpen(true);
-    }
+    } 
   }, [userProfile, orderHistory]);
 
   // ----------- MEMOIZED VALUES -----------------
@@ -271,20 +270,6 @@ export default function CafeRustic() {
   const clearCart = () => setCart([]);
 
   const handleCheckout = (fromAIChatAssistant = false) => {
-    const latestOrder = [...orderHistory].sort(
-      (a, b) => new Date(b.date) - new Date(a.date)
-    )[0];
-
-    if (
-      latestOrder &&
-      (latestOrder.status === "Order Placed" ||
-        latestOrder.status === "In Preparation")
-    ) {
-      toast.error(
-        "You already have an active order. Please wait until it's completed."
-      );
-      return;
-    }
     if (cart.length === 0) return;
 
     const newOrderNumber = Math.floor(1000 + Math.random() * 9000);
