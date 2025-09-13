@@ -98,23 +98,23 @@ export default function OrderProgressModal({
   };
 
   // Sync remaining_time to Supabase every second
-// useEffect(() => {
-//   if (!order?.id || order.paused) return;
-//   if (remaining == null) return;
+useEffect(() => {
+  if (!order?.id || order.paused) return;
+  if (remaining == null) return;
 
-//   const syncRemaining = async () => {
-//     try {
-//       await updateOrder(order.id, { remaining_time: remaining });
-//     } catch (err) {
-//       console.error("Failed to sync remaining_time:", err);
-//     }
-//   };
+  const syncRemaining = async () => {
+    try {
+      await updateOrder(order.id, { remaining_time: remaining });
+    } catch (err) {
+      console.error("Failed to sync remaining_time:", err);
+    }
+  };
 
-//   // Sync only when remaining is an exact multiple of 5 minutes
-//   if (remaining % (5 * 60 * 1000) === 0) {
-//     syncRemaining();
-//   }
-// }, [remaining, order?.id, order?.paused]);
+  // Sync only when remaining is an exact multiple of 5 minutes
+  if (remaining % (5 * 60 * 1000) === 0) {
+    syncRemaining();
+  }
+}, [remaining, order?.id, order?.paused]);
 
 
   useEffect(() => {
@@ -122,6 +122,11 @@ export default function OrderProgressModal({
     // If paused, stop timers
     if (order.paused) {
       clearTimers();
+      if (remaining !== null && remaining > 0) {
+        updateOrder(order.id, { remaining_time: remaining }).catch((err) =>
+          console.error("Failed to save remaining_time:", err)
+        );
+      }
       return;
     }
 
