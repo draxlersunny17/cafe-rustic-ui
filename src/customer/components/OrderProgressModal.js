@@ -97,17 +97,29 @@ export default function OrderProgressModal({
     }, duration);
   };
 
-  // Whenever order changes, update timers & UI
+  // Sync remaining_time to Supabase every second
+ useEffect(() => {
+  if (!order?.id || order.paused) return;
+  if (remaining == null) return;
+
+  const syncRemaining = async () => {
+    try {
+      await updateOrder(order.id, { remaining_time: remaining });
+    } catch (err) {
+      console.error("Failed to sync remaining_time:", err);
+    }
+  };
+  // Only sync every 5s to reduce DB load
+  if (remaining % 5000 === 0) {
+    syncRemaining();
+  }
+}, [remaining, order?.id, order?.paused]);
+
   useEffect(() => {
     if (!order) return;
     // If paused, stop timers
     if (order.paused) {
       clearTimers();
-      if (remaining !== null && remaining > 0) {
-        updateOrder(order.id, { remaining_time: remaining }).catch((err) =>
-          console.error("Failed to save remaining_time:", err)
-        );
-      }
       return;
     }
 
