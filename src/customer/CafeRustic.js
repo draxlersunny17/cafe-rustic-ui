@@ -138,7 +138,8 @@ export default function CafeRustic() {
       latestOrder.status === "In Preparation"
     ) {
       setOrderNumber(latestOrder.order_number);
-    } 
+      setOrderModalOpen(true);
+    }
   }, [userProfile, orderHistory]);
 
   // ----------- MEMOIZED VALUES -----------------
