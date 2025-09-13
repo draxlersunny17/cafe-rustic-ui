@@ -126,6 +126,22 @@ export default function CafeRustic() {
     getAllOrders();
   }, []);
 
+  useEffect(() => {
+    if (!userProfile || orderHistory.length === 0) return;
+
+    const latestOrder = [...orderHistory].sort(
+      (a, b) => new Date(b.date) - new Date(a.date)
+    )[0];
+
+    if (
+      latestOrder.status === "Order Placed" ||
+      latestOrder.status === "In Preparation"
+    ) {
+      setOrderNumber(latestOrder.order_number);
+      setOrderModalOpen(true);
+    }
+  }, [userProfile, orderHistory]);
+
   // ----------- MEMOIZED VALUES -----------------
   const cartCount = useMemo(
     () => cart.reduce((s, it) => s + it.qty, 0),
@@ -158,7 +174,7 @@ export default function CafeRustic() {
       );
     });
   }, [menuItems, category, query, favorites]);
-  
+
   const highlyOrderedItems = useMemo(() => {
     if (!allOrders.length || !menuItems.length) return [];
     const itemCount = {};
