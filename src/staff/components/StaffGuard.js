@@ -13,7 +13,7 @@ export default function StaffGuard({ children }) {
         const userId = localStorage.getItem("userId");
         if (!userId) return setAllowed(false);
         const profile = await fetchUserProfile(userId);
-        setAllowed(profile?.role === "staff");
+        setAllowed(profile?.role === "staff" || profile?.role === "admin");
       } catch {
         setAllowed(false);
       } finally {

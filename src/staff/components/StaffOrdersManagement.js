@@ -374,7 +374,10 @@ export default function StaffOrdersManagement() {
                           key={status}
                           disabled={
                             statusFlow.indexOf(status) <
-                            statusFlow.indexOf(order.status)
+                              statusFlow.indexOf(order.status) ||
+                            (status === "Completed" && !order.prep_time) || // 🚨 Block Completed if no prep_time
+                            // rule 3: block Completed if paused
+                            (status === "Completed" && order.paused)
                           }
                         >
                           {status}
