@@ -215,34 +215,34 @@ export default function OrderProgressModal({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 px-4 sm:px-6"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={() => {
-            // allow close only when finished
             if (order?.status === "Completed") onClose();
           }}
         >
           <motion.div
-            className={`${bgColor} rounded-2xl p-6 max-w-xl w-full shadow-2xl relative`}
+            className={`${bgColor} rounded-2xl p-4 sm:p-6 w-full max-w-md sm:max-w-lg md:max-w-xl shadow-2xl relative`}
             initial={{ scale: 0.98, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.98, opacity: 0 }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-start justify-between">
-              <h2 className="text-2xl font-semibold">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+              <h2 className="text-xl sm:text-2xl font-semibold text-center sm:text-left">
                 Order #{order?.order_number ?? "—"}
               </h2>
-              <div className="text-sm text-gray-500">
+              <div className="text-xs sm:text-sm text-gray-500 text-center sm:text-right">
                 {order?.date ? new Date(order.date).toLocaleString() : ""}
               </div>
             </div>
 
+            {/* Steps */}
             <div className="mt-6">
-              {/* Progress */}
-              <div className="flex items-center mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center mb-6 gap-6 sm:gap-0">
                 {STEPS.map((title, idx) => {
                   const isActive = order
                     ? idx === getStepIndex(order.status)
@@ -271,15 +271,16 @@ export default function OrderProgressModal({
                               : "#e5e7eb",
                             scale: isActive ? 1.12 : 1,
                           }}
-                          className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-gray-300"
+                          className="w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-2 border-gray-300"
                         >
                           {isCompleted && title !== "Completed" ? (
-                            // ✅ For completed "Order Placed" and "In Preparation"
-                            <span className="p-[9px] bg-white rounded-[21px] text-black text-2xl flex items-center justify-center">
-                              <Check className="w-5 h-5" strokeWidth={3} />
+                            <span className="p-[7px] sm:p-[9px] bg-white rounded-full text-black text-lg sm:text-2xl flex items-center justify-center">
+                              <Check
+                                className="w-4 h-4 sm:w-5 sm:h-5"
+                                strokeWidth={3}
+                              />
                             </span>
                           ) : (
-                            // 🖼 For active or not-yet-completed steps + Completed final image
                             <img
                               src={
                                 title === "In Preparation" && order?.paused
@@ -289,7 +290,7 @@ export default function OrderProgressModal({
                                   : defaultImage
                               }
                               alt={title}
-                              className={`w-10 h-10 rounded-full object-cover border border-white ${
+                              className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover border border-white ${
                                 isActive && !isCompleted && !order?.paused
                                   ? "animate-[spin_6s_linear_infinite]"
                                   : ""
@@ -298,7 +299,7 @@ export default function OrderProgressModal({
                           )}
                         </motion.div>
                         <span
-                          className={`mt-2 text-sm font-semibold text-center ${
+                          className={`mt-2 text-xs sm:text-sm font-semibold text-center ${
                             isCompleted
                               ? "text-green-600"
                               : isActive
@@ -320,7 +321,7 @@ export default function OrderProgressModal({
                                 ? "#4ade80"
                                 : "#f3f4f6",
                           }}
-                          className="flex-1 h-1 rounded-full mx-3 -mt-6"
+                          className="hidden sm:block flex-1 h-1 rounded-full mx-3 -mt-6"
                         />
                       )}
                     </React.Fragment>
@@ -328,38 +329,42 @@ export default function OrderProgressModal({
                 })}
               </div>
 
-              {/* Remaining countdown / paused notice */}
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="text-sm text-gray-500">Status</div>
-                  <div className="font-medium">{order?.status ?? "—"}</div>
+              {/* Status & countdown */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+                <div className="flex flex-col items-center sm:items-start">
+                  <div className="text-xs sm:text-sm text-gray-500">Status</div>
+                  <div className="font-medium text-sm sm:text-base">
+                    {order?.status ?? "—"}
+                  </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-center sm:text-right">
                   {!order?.paused ? (
                     order?.status === "In Preparation" && !order?.prep_time ? (
-                      <div className="text-amber-600 font-semibold flex items-center gap-2">
+                      <div className="text-amber-600 font-semibold flex items-center justify-center sm:justify-end gap-2">
                         <span className="inline-block animate-[spin_6s_linear_infinite]">
                           ⏳
                         </span>
-                        <span className="text-sm italic">
+                        <span className="text-xs sm:text-sm italic">
                           Your order will be ready soon
                         </span>
                       </div>
                     ) : (
                       <div>
-                        <div className="text-sm text-gray-500">
+                        <div className="text-xs sm:text-sm text-gray-500">
                           Time remaining
                         </div>
-                        <div className="font-mono">{formatTime(remaining)}</div>
+                        <div className="font-mono text-sm sm:text-base">
+                          {formatTime(remaining)}
+                        </div>
                       </div>
                     )
                   ) : (
-                    <div className="text-amber-600 font-semibold flex items-center gap-2">
+                    <div className="text-amber-600 font-semibold flex items-center justify-center sm:justify-end gap-2">
                       <span className="inline-block animate-[spin_6s_linear_infinite]">
                         ⏳
                       </span>
-                      <span className="text-sm italic">
+                      <span className="text-xs sm:text-sm italic">
                         Hang tight — your order is slightly delayed
                       </span>
                     </div>
@@ -367,12 +372,12 @@ export default function OrderProgressModal({
                 </div>
               </div>
 
-              {/* Staff-only pause/resume + Close on complete */}
+              {/* Close button */}
               {order?.status === "Completed" && (
                 <div className="mt-6">
                   <button
                     onClick={onClose}
-                    className="w-full px-5 py-3 rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                    className="w-full px-4 py-3 rounded-full bg-green-600 hover:bg-green-700 text-white font-semibold text-sm sm:text-base"
                   >
                     Close
                   </button>
