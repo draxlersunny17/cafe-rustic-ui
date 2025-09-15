@@ -6,10 +6,10 @@ export default function Shell({ children }) {
     const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const nav = [
-    { to: "/dashboard/overview", label: "Overview" },
-    { to: "/dashboard/users", label: "Users" },
-    { to: "/dashboard/menu", label: "Menu" },
-    { to: "/dashboard/special-offers", label: "Offers" },
+  { to: "/admin/dashboard/overview", label: "Overview" },
+  { to: "/admin/dashboard/users", label: "Users" },
+  { to: "/admin/dashboard/menu", label: "Menu" },
+  { to: "/admin/dashboard/special-offers", label: "Offers" },
   ];
 
   return (

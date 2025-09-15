@@ -26,7 +26,7 @@ export default function Navbar({
 
   // Role-based items with routes
   const staffItems = [{ name: "Staff", path: "/staff" }];
-  const adminItems = [{ name: "Admin", path: "/dashboard" }];
+  const adminItems = [{ name: "Admin", path: "/admin" }];
 
   // Merge role-based items
   const roleItems = [

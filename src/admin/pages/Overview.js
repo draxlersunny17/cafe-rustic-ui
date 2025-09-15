@@ -135,7 +135,7 @@ export default function Overview() {
           title="Users"
           value={kpis.numUsers}
           color="blue"
-          onClick={() => navigate("/dashboard/users")}
+          onClick={() => navigate("/admin/dashboard/users")}
         />
         <KPICard
           icon={<ShoppingBag className="h-6 w-6" />}

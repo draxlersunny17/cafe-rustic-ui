@@ -13,12 +13,12 @@ export default function AdminDashboard() {
     <AdminGuard>
       <Shell>
         <Routes>
-          <Route path="overview" element={<Overview />} />
-          <Route path="users" element={<UsersPage />} />
-          <Route path="menu" element={<MenuPage />} />
-          <Route path="special-offers" element={<SpecialOffersPage />} />
-          <Route index element={<Navigate to="overview" replace />} />
-          <Route path="*" element={<Navigate to="overview" replace />} />
+          <Route path="dashboard/overview" element={<Overview />} />
+          <Route path="dashboard/users" element={<UsersPage />} />
+          <Route path="dashboard/menu" element={<MenuPage />} />
+          <Route path="dashboard/special-offers" element={<SpecialOffersPage />} />
+          <Route index element={<Navigate to="dashboard/overview" replace />} />
+          <Route path="*" element={<Navigate to="dashboard/overview" replace />} />
         </Routes>
       </Shell>
     </AdminGuard>
