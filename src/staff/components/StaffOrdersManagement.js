@@ -129,7 +129,7 @@ export default function StaffOrdersManagement() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
         <h2 className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
-          Order Management Dashboard
+         🛒 Order Management
         </h2>
 
         {/* Filters & Search */}

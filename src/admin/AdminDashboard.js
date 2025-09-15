@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Navigate } from "react-router-dom";
 import AdminGuard from "./components/AdminGuard";
-import Shell from "./components/Shell";
+import Shell from "./components/AdminShell";
 import Overview from "./pages/Overview";
 import UsersPage from "./pages/UsersPage";
 import MenuPage from "./pages/MenuPage";

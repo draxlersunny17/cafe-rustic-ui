@@ -2,14 +2,12 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
-export default function Shell({ children }) {
+export default function StaffShell({ children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
   const nav = [
-    { to: "/admin/dashboard/overview", label: "Overview" },
-    { to: "/admin/dashboard/users", label: "Users" },
-    { to: "/admin/dashboard/menu", label: "Menu" },
-    { to: "/admin/dashboard/special-offers", label: "Offers" },
+    { to: "/staff/orders", label: "Orders" },
+    // Add more staff nav items here if needed
   ];
 
   return (
@@ -24,9 +22,9 @@ export default function Shell({ children }) {
 
       {/* Content wrapper so children sit above background */}
       <div className="relative z-10">
-        {/* 🔥 Top Navbar */}
+        {/* Top Navbar */}
         <header className="sticky top-0 z-30 bg-gray-900/90 backdrop-blur text-white shadow">
-          <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+          <div className="mx-auto  px-6 py-4 flex items-center justify-between">
             {/* Logo */}
             <div className="text-2xl font-bold tracking-wide flex gap-4">
               <Link to="/" className="flex items-center gap-4">
@@ -36,7 +34,7 @@ export default function Shell({ children }) {
                   className="w-8 h-8 object-cover"
                 />
               </Link>
-              Café Rustic — Admin
+              Café Rustic — Staff
             </div>
 
             {/* Desktop Nav */}
@@ -59,15 +57,16 @@ export default function Shell({ children }) {
             {/* Mobile Menu Button */}
             <button
               className="md:hidden p-2 rounded-lg hover:bg-gray-700 transition"
-              onClick={() => setMenuOpen(!menuOpen)}
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label="Toggle menu"
             >
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           </div>
 
-          {/* Mobile Nav Dropdown */}
+          {/* Mobile Nav */}
           {menuOpen && (
-            <div className="md:hidden bg-gray-900 border-t border-gray-700">
+            <div className="md:hidden bg-gray-800/90 border-t border-gray-700">
               <nav className="flex flex-col p-4 space-y-2">
                 {nav.map((n) => (
                   <Link
@@ -88,8 +87,8 @@ export default function Shell({ children }) {
           )}
         </header>
 
-        {/* Page Content */}
-        <main className="mx-auto max-w-7xl p-6 lg:p-10">{children}</main>
+        {/* Main Content */}
+        <main className=" mx-auto">{children}</main>
       </div>
     </div>
   );
