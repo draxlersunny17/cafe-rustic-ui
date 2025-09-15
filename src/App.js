@@ -12,7 +12,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<CafeRustic />} />
         <Route path="/feedback" element={<FeedbackForm />} />
-        <Route path="/admin/*" element={<AdminDashboardApp />} /> {/* 👈 added */}
+        <Route path="/dashboard/*" element={<AdminDashboardApp />} /> {/* 👈 added */}
         <Route path="/staff" element={<StaffDashboard />} />
       </Routes>
     </Router>
