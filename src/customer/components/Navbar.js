@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { FaSun, FaMoon } from "react-icons/fa";
+import { Link } from "react-router-dom";
 
 export default function Navbar({
   theme,
@@ -13,13 +14,26 @@ export default function Navbar({
   const [greeting, setGreeting] = useState("");
   const [loadingGreeting, setLoadingGreeting] = useState(false);
   const firstName = userProfile?.name ? userProfile.name.split(" ")[0] : "";
+  const userRole = userProfile?.role || null; // "staff", "admin", or null
 
+  // Public menu items (smooth scroll)
   const menuItems = [
     { name: "Home", id: "home" },
     { name: "About", id: "about" },
     { name: "Menu", id: "menu" },
     { name: "Contact", id: "contact" },
   ];
+
+  // Role-based items with routes
+  const staffItems = [{ name: "Staff", path: "/staff" }];
+  const adminItems = [{ name: "Admin", path: "/admin" }];
+
+  // Merge role-based items
+  const roleItems = [
+    ...(userRole === "staff" || userRole === "admin" ? staffItems : []),
+    ...(userRole === "admin" ? adminItems : []),
+  ];
+
   const Loader = () => (
     <span className="flex gap-1 items-end h-6">
       <span className="w-1.5 rounded-sm animate-[wave_1.2s_infinite_ease-in-out] bg-gradient-to-t from-amber-600 to-amber-300"></span>
@@ -141,6 +155,17 @@ export default function Navbar({
             </button>
           ))}
 
+          {/* Role-based items (routes) */}
+          {roleItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+             className="hover:underline text-amber-700 dark:text-amber-300 font-semibold"
+            >
+              {item.name}
+            </Link>
+          ))}
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}
@@ -201,7 +226,19 @@ export default function Navbar({
             </button>
           ))}
 
-          {/* Profile / Sign In Button on Mobile */}
+          {/* Role-based items (routes) */}
+          {roleItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              onClick={() => setMenuOpen(false)}
+              className="hover:underline text-amber-700 dark:text-amber-300 font-semibold"
+            >
+              {item.name}
+            </Link>
+          ))}
+
+          {/* Profile / Sign In */}
           <button
             onClick={() => {
               userProfile ? setProfileOpen(true) : setSignInOpen(true);
